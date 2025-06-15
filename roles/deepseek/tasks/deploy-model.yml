@@ -16,32 +16,9 @@
   when: print_debug == true
 
 
-
-# ollama-operator-system   pod/ollama-model-phi-74759f7d47-tbp8c                     0/1     Init:0/1   0          62s
-# ollama-operator-system   pod/ollama-models-store-0                                 1/1     Running    0          2m18s
-# ollama-operator-system   pod/ollama-operator-controller-manager-74d7dccc76-4hl6v   2/2     Running    0          7m
-
-
-# kollama deploy phi -n ollama-operator-system --expose --service-type=LoadBalancer
-# Deploying model "phi"...
-#
-# ✓ image store is ready
-# ✓ image store exposed
-# ⠹ pulling model image "phi"...
-#
-# ⠼ pulling model image "phi"...
-# ⠧ pulling model image "phi"...
-# ⠋ pulling model image "phi"...
-# ✓ model pulled and prepared
-# ✓ model is ready
-# ✓ model exposed
-#
-# 🎉 Successfully deployed phi.
-# 🌐 The model has been exposed through a service over 192.168.1.171:32379.
-#
 # To start a chat with ollama:
 #
-#  OLLAMA_HOST=192.168.1.171:32379 ollama run phi
+# OLLAMA_HOST=192.168.1.171:32379 ollama run deepseek-r1
 #
 # To integrate with your OpenAI API compatible client:
 #
@@ -56,10 +33,8 @@
 # }'
 
 
-
 # kubectl wait --for=jsonpath='{.status.readyReplicas}'=1 deployment/ollama-model-phi -n ollama-operator-system
 
+# OLLAMA_HOST=192.168.1.171:32379 ollama run deepseek-r1 # phi, phi4
 
-
-# OLLAMA_HOST=192.168.1.171:32379 ollama run phi
 

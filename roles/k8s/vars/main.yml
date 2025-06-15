@@ -25,6 +25,7 @@ cont_pv_dirs:
   - "cf-db-storage"
   - "cf-blobstore-storage"
   - "cf-for-k8s"
+  - "deepseek-storage"
 
 
 common_conf_files:

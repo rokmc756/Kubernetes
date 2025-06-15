@@ -12,7 +12,7 @@ spec:
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
+  persistentVolumeReclaimPolicy: Delete # Retain
   storageClassName: {{ _deepseek.storage_class }}
   local:
     path: {{ _deepseek.storage_path }}-{{ n }}

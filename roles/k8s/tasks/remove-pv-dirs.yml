@@ -10,7 +10,7 @@
 
 - name: Remove Directories for Persistent Volumes
   file:
-    path: "/mnt/{{ item }}"
+    path: "/mnt/{{ item }}*"
     state: absent
   register: remove_pv_dir
   ignore_errors: true
@@ -24,3 +24,4 @@
   register: remove_common_dirs
   ignore_errors: true
   with_items: "{{ cont_conf_files }}"
+

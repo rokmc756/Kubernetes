@@ -53,125 +53,19 @@ _deepseek:
     - "net.ipv4.neigh.default.gc_thresh1 = 0"   # For ARP Cache
     - "fs.inotify.max_user_instances=2280"
     - "fs.inotify.max_user_watches=755360"
-  lb:
-    install: true
-    ip_addr: "192.168.1.234"
-#  sharded_shard: 4                # It should be less than number of data nodes
-#  shardsvr: 4
-#  deepseeks: 3
-#  configsvr: 2
-#
-#
-## ollama_total_pvs: "{{ ( _ollama.sharded_shard|int * _ollama.shardsvr|int ) + _ollama.configsvr|int }}"
-#ollama_total_pvs: 5
+  svc:
+    - { name: "ollama-models-store", lb_ip_addr: "192.168.1.221" }
+    - { name: "open-webui", lb_ip_addr: "192.168.1.222" }
+    - { name: "open-webui-ollama", lb_ip_addr: "192.168.1.223" }
+    - { name: "open-webui-pipelines", lb_ip_addr: "192.168.1.224" }
+    - { name: "open-webui-postgres", lb_ip_addr: "192.168.1.225" }
 
 deepseek_total_pvs: 5
 # deepseek_total_pvs: "{{ ( _deepseek.sharded_shard|int * _deepseek.shardsvr|int ) + _deepseek.configsvr|int }}"
 
 
-
-#_ollama:
-#  download: true
-#  install: true
-#  major_version: 0
-#  minor_version: 10
-#  patch_version: 7
-#  admin_user: "admin"
-#  admin_password: "Changeme123"
-#  admin_email: "rokmc756@gmail.com"
-#  enable_discovery_daemon: false
-#  clone_git: true
-#  nvme: true
-#  namespace: ollama-operator-system
-#  storage_path: "/mnt/ollama-storage"
-#  storage_class: "ollama-storage"
-#  hostname: "deepseek.jtest.pivotal.io"
-#  service:
-#    metadata:
-#      name: deepseek-loadbalancer
-#      namespace: deepseek
-#  ingress:
-#    metadata:
-#      name: deepseek-ingress
-#      namespace: deepseek
-#    hostname: "deepseek.jtest.pivotal.io"
-#  kernel_parameters:
-#    - "net.ipv4.neigh.default.gc_thresh1 = 0"   # For ARP Cache
-#    - "fs.inotify.max_user_instances=2280"
-#    - "fs.inotify.max_user_watches=755360"
-#  lb:
-#    install: true
-#    ip_addr: "192.168.1.234"
-#  sharded_shard: 4                # It should be less than number of data nodes
-#  shardsvr: 4
-#  deepseeks: 3
-#  configsvr: 2
-#
-#
-## ollama_total_pvs: "{{ ( _ollama.sharded_shard|int * _ollama.shardsvr|int ) + _ollama.configsvr|int }}"
-#ollama_total_pvs: 5
-
-
-#_deepseek:
-#  install: true
-#  major_version: 27
-#  minor_version: 1
-#  patch_version: 2
-#  build_version:
-#  admin_user: "admin"
-#  admin_password: "Changeme123"
-#  admin_email: "rokmc756@gmail.com"
-#  enable_discovery_daemon: false
-#  clone_git: true
-#  nvme: true
-#  namespace: deepseek
-#  storage_path: "/mnt/deepseek-storage"
-#  storage_class: "deepseek-storage"
-#  k8s:
-#    major_version: 1
-#    minor_version: 28
-#    patch_version: 0
-#    build_version:
-#  hostname: "deepseek.jtest.pivotal.io"
-#  service:
-#    metadata:
-#      name: deepseek-loadbalancer
-#      namespace: deepseek
-#  ingress:
-#    metadata:
-#      name: deepseek-ingress
-#      namespace: deepseek
-#    hostname: "deepseek.jtest.pivotal.io"
-#  kernel_parameters:
-#    - "net.ipv4.neigh.default.gc_thresh1 = 0"   # For ARP Cache
-#    - "fs.inotify.max_user_instances=2280"
-#    - "fs.inotify.max_user_watches=755360"
-#  lb:
-#    install: true
-#    ip_addr: "192.168.1.234"
-#  sharded_shard: 4                # It should be less than number of data nodes
-#  shardsvr: 4
-#  deepseeks: 3
-#  configsvr: 2
-#
-#deepseek_total_pvs: "{{ ( _deepseek.sharded_shard|int * _deepseek.shardsvr|int ) + _deepseek.configsvr|int }}"
-
-
-_deepseek_express:
-  install: true
-  namespace: deepseek-express
-  major_version: 2
-  minor_version: 6
-  patch_version: 5
-  build_version:
-  storage_class: "deepseek-express-storage"
-  storage_path: "/mnt/deepseek-express-storage"
-  repo_name: cowboysysop
-  download_link: "https://cowboysysop.github.io/charts/"
-  replica: 1
-  lb:
-    install: true
-    ip_addr: "192.168.1.218"
+# NAME                          TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)           AGE
+# ollama-model-deepseek-r1-lb   LoadBalancer   10.101.81.199    192.168.1.210   11434:30913/TCP   11m
 
 
 _helm:
@@ -204,7 +98,7 @@ _nginx:
 
 
 _ssl:
-  dir: "{{ base_path }}/deepseek-express-certs"
+  dir: "{{ base_path }}/deepseek-certs"
   days: 3660
   country: "KR"
   state: "Seoul"

@@ -1,26 +1,23 @@
 ---
-- name: Delete deepseek Load Balancer
+- name: Delete DeepSeek Load Balancer
   shell: |
-    kubectl patch svc {{ item.svc }} -n {{ _deepseek.namespace }} -p '{"spec": {"type": "ClusterIP"}}'
+    kubectl patch svc {{ item.name }} -n {{ _deepseek.namespace }} -p '{"spec": {"type": "ClusterIP"}}'
   register: delete_deepseek_lb
   ignore_errors: yes
   args:
     chdir: "{{ base_path }}"
-  with_items:
-    - { svc: "deepseek-deepseek-sharded", lb_ip_addr: "{{ _deepseek.lb.ip_addr }}" }
+  with_items: "{{ _deepseek.svc }}"
 - debug: msg={{ delete_deepseek_lb }}
   when: print_debug == true
 
 
-- name: Delete deepseek Express Load Balancer
+- name: Print DeepSeek Services
   shell: |
-    kubectl patch svc {{ item.svc }} -n {{ _deepseek_express.namespace }} -p '{"spec": {"type": "ClusterIP"}}'
-  register: delete_deepseek_express_lb
+    kubectl get svc -n {{ _deepseek.namespace }}
+  register: print_deepseek_svc
   ignore_errors: yes
   args:
     chdir: "{{ base_path }}"
-  with_items:
-    - { svc: "deepseek-express", lb_ip_addr: "{{ _deepseek_express.lb.ip_addr }}" }
-- debug: msg={{ delete_deepseek_express_lb }}
+- debug: msg={{ print_deepseek_svc }}
   when: print_debug == true
 

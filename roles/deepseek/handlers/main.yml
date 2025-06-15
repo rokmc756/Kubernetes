@@ -20,3 +20,15 @@
     name: sshd
     state: reloaded
 
+
+- name: Restart Containerd
+  systemd:
+    name: containerd
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  register: restart_containerd
+  until: restart_containerd is succeeded
+  retries: 20
+  delay: 10
+

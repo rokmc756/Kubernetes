@@ -6,14 +6,27 @@
   when: print_debug == true
 
 
-- name: Copy Open Web UI Config Yaml
+- name: Copy Open Web UI and PVC Config Yaml
   template:
     src: "{{ item }}.j2"
     dest: "{{ base_path }}/{{ item }}"
   register: copy_open_webui_config_yaml
   with_items:
     - "open-webui-values.yaml"
+    - "local-storage-open-webui-pvc.yaml"
 - debug: msg={{ copy_open_webui_config_yaml }}
+
+
+- name: Create Open Web UI PVC for Pending Status
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_local_open_webui_pv
+  with_items:
+    - "local-storage-open-webui-pvc.yaml"
+  args:
+    chdir: "{{ base_path }}"
+- debug: msg={{ create_local_open_webui_pv }}
+  when: print_debug == true
 
 
 - name: Install Open Web UI
@@ -26,24 +39,24 @@
   when: print_debug == true
 
 
-#3. Useful Commands:
-#  - Check deployment status:
-#      helm status open-webui -n deepseek
-#
-#  - Get detailed information:
-#      helm get all open-webui -n deepseek
-#
-#  - View logs:
-#      kubectl logs -f statefulset/open-webui -n deepseek
-
-
 - name: Validate if Open Web UI Container is Running
   shell: |
     kubectl get pods -n {{ _deepseek.namespace }} |  grep open-webui | awk '{print $3}' | grep Running | wc -l
   register: check_open_webui_container
-  until: check_open_webui_container.stdout|int == 1
+  until: check_open_webui_container.stdout|int == 4
   retries: 100
   delay: 10
 - debug: msg={{ check_open_webui_container }}
   when: print_debug == true
+
+
+# Check deployment status:
+# helm status open-webui -n deepseek
+#
+# Get detailed information:
+# helm get all open-webui -n deepseek
+#
+# View logs:
+# kubectl logs -f statefulset/open-webui -n deepseek
+
 

@@ -1,3 +1,4 @@
+---
 - name: Create Namespace for Persistent Volumes
   shell: |
     kubectl create namespace {{ _nginx.ingress.namespace }}

@@ -69,6 +69,18 @@
   when: (( ui is defined and ui == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
 
 
+- name: Install Load Balancer
+  import_tasks: install-lb.yml
+  tags: apply, install
+  when: (( lb is defined and lb == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Uninstall Load Balancer
+  import_tasks: uninstall-lb.yml
+  tags: uninstall
+  when: (( lb is defined and lb == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
+
+
 - name: Undeploy DeepSeek R1 Model
   import_tasks: undeploy-model.yml
   tags: undeploy, uninstall
@@ -99,12 +111,6 @@
   when: (( repo is defined and repo == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
 
 
-#- name: Install Load Balancer
-#  import_tasks: install-lb.yml
-#  tags: install
-#  when: (( lb is defined and lb == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
-#
-#
 #- name: Install NGINX Ingress
 #  import_tasks: install-ingress.yml
 #  tags: install
@@ -115,10 +121,5 @@
 #  import_tasks: uninstall-ingress.yml
 #  tags: uninstall
 #  when: (( ingress is defined and ingress == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
-#
-#
-#- name: Uninstall Load Balancer
-#  import_tasks: uninstall-lb.yml
-#  tags: uninstall
-#  when: (( lb is defined and lb == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
+
 
