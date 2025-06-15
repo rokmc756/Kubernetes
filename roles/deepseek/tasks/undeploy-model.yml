@@ -1,7 +1,7 @@
 ---
 - name: Deploy DeepSeek R1 Model
   shell: |
-    kollama undeploy {{ item  }} -n ollama-operator-system
+    kollama undeploy {{ item  }} -n {{ _deepseek.namespace }}
   register: deploy_dsr1_model
   args:
     executable: /bin/bash

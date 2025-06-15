@@ -3,51 +3,50 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: ollama-models-store-pvc
-  namespace: {{ _ollama.namespace }}
+  namespace: {{ _deepseek.namespace }}
 spec:
-  storageClassName: {{ _ollama.storage_class }}
+  storageClassName: {{ _deepseek.storage_class }}
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 10Gi
-#---
-#apiVersion: v1
-#kind: PersistentVolumeClaim
-#metadata:
-#  name: open-webui
-#  namespace: {{ _ollama.namespace }}
-#spec:
-#  storageClassName: {{ _ollama.storage_class }}
-#  accessModes:
-#    - ReadWriteOnce
-#  resources:
-#    requests:
-#      storage: 10Gi
-#---
-#apiVersion: v1
-#kind: PersistentVolumeClaim
-#metadata:
-#  name: open-webui-pipelines
-#  namespace: {{ _ollama.namespace }}
-#spec:
-#  storageClassName: {{ _ollama.storage_class }}
-#  accessModes:
-#    - ReadWriteOnce
-#  resources:
-#    requests:
-#      storage: 10Gi
-#---
-#apiVersion: v1
-#kind: PersistentVolumeClaim
-#metadata:
-#  name: data-open-webui-postgres-0
-#  namespace: {{ _ollama.namespace }}
-#spec:
-#  storageClassName: {{ _ollama.storage_class }}
-#  accessModes:
-#    - ReadWriteOnce
-#  resources:
-#    requests:
-#      storage: 10Gi
-#
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: open-webui
+  namespace: {{ _deepseek.namespace }}
+spec:
+  storageClassName: {{ _deepseek.storage_class }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: open-webui-pipelines
+  namespace: {{ _deepseek.namespace }}
+spec:
+  storageClassName: {{ _deepseek.storage_class }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-open-webui-postgres-0
+  namespace: {{ _deepseek.namespace }}
+spec:
+  storageClassName: {{ _deepseek.storage_class }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

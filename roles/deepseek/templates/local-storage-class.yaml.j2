@@ -2,8 +2,8 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: {{ _ollama.storage_class }}
-  namespace: {{ _ollama.namespace }}
+  name: {{ _deepseek.storage_class }}
+  namespace: {{ _deepseek.namespace }}
 provisioner: kubernetes.io/no-provisioner
 volumeBindingMode: WaitForFirstConsumer
 

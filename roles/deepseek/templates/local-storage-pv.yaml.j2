@@ -1,11 +1,11 @@
 {% for h in groups["workers"] %}
-{% for n in range(0, ollama_total_pvs|int) %}
+{% for n in range(0, deepseek_total_pvs|int) %}
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: ollama-pv-{{ hostvars[h]['ansible_hostname'] }}-{{ n }}
-  namespace: {{ _ollama.namespace }}
+  name: deepseek-pv-{{ hostvars[h]['ansible_hostname'] }}-{{ n }}
+  namespace: {{ _deepseek.namespace }}
 spec:
   capacity:
     storage: 15Gi
@@ -13,9 +13,9 @@ spec:
   accessModes:
   - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: {{ _ollama.storage_class }}
+  storageClassName: {{ _deepseek.storage_class }}
   local:
-    path: {{ _ollama.storage_path }}-{{ n }}
+    path: {{ _deepseek.storage_path }}-{{ n }}
   nodeAffinity:
     required:
       nodeSelectorTerms:

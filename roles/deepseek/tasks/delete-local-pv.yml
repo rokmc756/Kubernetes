@@ -20,7 +20,7 @@
   with_items:
     - "local-storage-pv.yaml"
     - "local-storage-class.yaml"
-    # - "local-storage-pvc.yaml"
+    - "local-storage-pvc.yaml"
   args:
     chdir: "{{ base_path }}/"
 - debug: msg={{ delete_local_pvc }}
@@ -41,13 +41,13 @@
   when: print_debug == true
 
 
-#- name: Delete Namespace for Local PV
-#  shell: |
-#    kubectl delete namespace {{ _ollama.namespace }}
-#  register: delete_ollama_ns
-#  ignore_errors: true
-#- debug: msg={{ delete_ollama_ns }}
-#  when: print_debug == true
+- name: Delete Namespace for Local PV
+  shell: |
+    kubectl delete namespace {{ _deepseek.namespace }}
+  register: delete_deepseek_ns
+  ignore_errors: true
+- debug: msg={{ delete_deepseek_ns }}
+  when: print_debug == true
 
 
 #- name: Remove Directory for Persistent Volumes for Ollama

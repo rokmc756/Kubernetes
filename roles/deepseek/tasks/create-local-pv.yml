@@ -1,8 +1,10 @@
 ---
 - name: Create Namespace for Ollama
   shell: |
-    kubectl create namespace {{ _ollama.namespace }}
+    kubectl create namespace {{ item }}
   register: create_ollama_ns
+  with_items:
+    - "{{ _deepseek.namespace }}"
 - debug: msg={{ create_ollama_ns }}
   when: print_debug == true
 

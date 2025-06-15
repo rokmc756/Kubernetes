@@ -1,7 +1,7 @@
 ---
 - name: Deploy DeepSeek R1 Model
   shell: |
-    kollama deploy {{ item }} -n ollama-operator-system --expose --service-type=LoadBalancer
+    kollama deploy {{ item }} -n {{ _deepseek.namespace }} --expose --service-type=LoadBalancer
   register: deploy_dsr1_model
   args:
     executable: /bin/bash

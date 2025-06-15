@@ -63,16 +63,16 @@
   when: (( ui is defined and ui == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
 
 
-#- name: Destory Open Web UI
-#  import_tasks: uninstall-open-webui.yml
-#  tags: destroy, uninstall
-#  when: (( ui is defined and ui == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
+- name: Destory Open Web UI
+  import_tasks: uninstall-open-webui.yml
+  tags: destroy, uninstall
+  when: (( ui is defined and ui == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
 
 
-#- name: Undeploy DeepSeek R1 Model
-#  import_tasks: undeploy-model.yml
-#  tags: undeploy, uninstall
-#  when: (( model is defined and model == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
+- name: Undeploy DeepSeek R1 Model
+  import_tasks: undeploy-model.yml
+  tags: undeploy, uninstall
+  when: (( model is defined and model == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Uninstall the Ollama Operator

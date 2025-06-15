@@ -22,7 +22,6 @@
 
 - name: Download Ollama File If Copy Fails
   shell: wget https://github.com/ollama/ollama/releases/download/v0.9.0/ollama-linux-amd64.tgz -P {{ k8s.base_path }}
-
   args:
     executable: /bin/bash
     chdir: "{{ base_path }}"

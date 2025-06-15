@@ -26,6 +26,8 @@ pipelines:
   enabled: true
   # -- This section can be used to pass required environment variables to your pipelines (e.g. Langfuse hostname)
   extraEnvVars: []
+  persistence:
+    existingClaim: "open-webui-pipelines"
 
 tika:
   # -- Automatically install Apache Tika to extend Open WebUI
@@ -213,13 +215,13 @@ persistence:
   enabled: true
   size: 2Gi
   # -- Use existingClaim if you want to re-use an existing Open WebUI PVC instead of creating a new one
-  existingClaim: ""
+  existingClaim: "open-webui"
   # -- Subdirectory of Open WebUI PVC to mount. Useful if root directory is not empty.
   subPath: ""
   # -- If using multiple replicas, you must update accessModes to ReadWriteMany
   accessModes:
     - ReadWriteOnce
-  storageClass: ""
+  storageClass: "deepseek-storage"
   selector: {}
   annotations: {}
   # -- Sets the storage provider, availables values are `local`, `s3`, `gcs` or `azure`
@@ -554,6 +556,7 @@ postgresql:
   primary:
     persistence:
       size: 1Gi
+      existingClaim: "data-open-webui-postgres-0"
     resources:
       requests:
         memory: 256Mi

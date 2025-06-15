@@ -1,7 +1,7 @@
 ---
 - name: Uninstall Web UI
   shell: |
-    /usr/local/bin/helm uninstall open-webui -n {{ _open_webui.namespace }}
+    /usr/local/bin/helm uninstall open-webui -n {{ _deepseek.namespace }}
   register: uninstall_open_webui
   ignore_errors: true
   args:
@@ -12,7 +12,7 @@
 
 - name: Validate if Open Web UI Containers are Deleted
   shell: |
-    kubectl get pods -n {{ _open_webui.namespace }} | grep open-webui | awk '{print $3}' | grep -E 'Terminating|Running' | wc -l
+    kubectl get pods -n {{ _deepseek.namespace }} | grep open-webui | awk '{print $3}' | grep -E 'Terminating|Running' | wc -l
   register: delete_open_webui_container
   ignore_errors: true
   until: delete_open_webui_container.stdout|int == 0
@@ -33,12 +33,4 @@
 - debug: msg={{ delete_open_webui_config }}
   when: print_debug == true
 
-
-- name: Delete Namespace for Open Web UI
-  shell: |
-    kubectl delete namespace {{ _open_webui.namespace }}
-  register: delete_open_webui_namespace
-  ignore_errors: true
-- debug: msg={{ delete_open_webui_namespace }}
-  when: print_debug == true
 

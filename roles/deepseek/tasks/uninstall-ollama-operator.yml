@@ -1,11 +1,12 @@
 ---
 - name: Uninstall the Ollama Operator
   shell: |
-    kubectl delete -f https://raw.githubusercontent.com/nekomeowww/ollama-operator/v{{ _ollama_version }}/dist/install.yaml
+    kubectl -n {{ _ollama.namespace }} delete -f https://raw.githubusercontent.com/nekomeowww/ollama-operator/v{{ _ollama_version }}/dist/install.yaml
   register: uninstall_ollama_operator
 - debug: msg={{ uninstall_ollama_operator }}
   when: print_debug == true
   # kubectl delete --server-side=true -f https://raw.githubusercontent.com/nekomeowww/ollama-operator/{{ _ollama_version }}/dist/install.yaml
+  # kubectl delete -f https://raw.githubusercontent.com/nekomeowww/ollama-operator/v{{ _ollama_version }}/dist/install.yaml
 
 
 #- name: Wait for the Operator to be Ready
