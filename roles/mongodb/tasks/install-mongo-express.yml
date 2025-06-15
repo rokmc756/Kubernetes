@@ -1,0 +1,76 @@
+# https://staging.artifacthub.io/packages/helm/appscode/mongo-express
+
+- name: Create Namespace for Mongo Express
+  shell: |
+    kubectl create namespace {{ _mongo_express.namespace }}
+  register: create_mongo_express_ns
+- debug: msg={{ create_mongo_express_ns }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  with_items:
+    - "express-storage-class.yaml"
+    - "express-storage-pv.yaml"
+    - "express-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_pvc
+  with_items:
+    - "express-storage-class.yaml"
+    - "express-storage-pv.yaml"
+    - "express-storage-pvc.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ create_pvc }}
+  when: print_debug == true
+
+
+- name: Copy MongoDB Config Values Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_mongodb_config_values_yaml
+  with_items:
+    - "mongodb-values.yaml"
+- debug: msg={{ copy_mongodb_config_values_yaml }}
+
+
+- name: Copy Mongo Express Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_mongo_express_config_yaml
+  with_items:
+    - "mongo-express-values.yaml"
+- debug: msg={{ copy_mongo_express_config_yaml }}
+
+
+- name: Install Mongo Express
+  shell: |
+    /usr/local/bin/helm install mongo-express cowboysysop/mongo-express -n {{ _mongo_express.namespace }} -f {{ base_path }}/mongo-express-values.yaml
+  register: install_mongo_express
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ install_mongo_express }}
+  when: print_debug == true
+
+
+- name: Validate if Mongo Express Container is Running
+  shell: |
+    kubectl get pods -n {{ _mongo_express.namespace }} | grep mongo-express | awk '{print $3}' | uniq
+  register: check_mongo_express_container
+  until: check_mongo_express_container.stdout.find("Running") != -1
+  retries: 100
+  delay: 10
+- debug: msg={{ check_mongo_express_container }}
+  when: print_debug == true
+

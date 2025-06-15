@@ -1,0 +1,43 @@
+---
+image:
+  repository: ngoduykhanh/powerdns-admin
+  tag: v0.2.4
+  pullPolicy: IfNotPresent
+
+
+env:
+  TZ: UTC
+  SECRET_KEY: changeme
+  GUNICORN_TIMEOUT: 60
+  GUNICORN_WORKERS: 2
+  GUNICORN_LOGLEVEL: DEBUG
+
+
+service:
+  main:
+    enabled: true
+    type: ClusterIP
+    loadBalancerIP: "{{ _powerdns.admin.ip_addr }}"
+    ports:
+      http:
+        port: 80
+
+
+ingress:
+  main:
+    enabled: false
+
+
+persistence:
+  config:
+    enabled: true
+    type: pvc
+    storageClass: "{{ _powerdns.storage_class }}"
+    existingClaim: powerdns-admin-data
+    accessMode: ReadWriteOnce
+    size: 10Gi
+
+
+# https://github.com/k8s-at-home/library-charts/blob/main/charts/stable/common/values.yaml
+# helm inspect values k8s-at-home/powerdns-admin --version 1.2.2 > powerdns-admin-values.yaml
+

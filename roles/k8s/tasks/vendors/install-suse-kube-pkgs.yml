@@ -1,0 +1,84 @@
+---
+- name: Install RPM Packages of Dependenies to Need Installing Packages Regarding Kubernates
+  package:
+    name: "{{ item }}"
+    state: present
+  ignore_errors: yes
+  with_items: "{{ install_pkgs }}"
+
+
+- name: Add Kubernetes Repository
+  shell: |
+    zypper ar -f https://pkgs.k8s.io/core:/stable:/v{{ k8s.major_version }}.{{ k8s.minor_version }}/rpm kubernetes
+    rpm --import https://pkgs.k8s.io/core:/stable:/v{{ k8s.major_version }}.{{ k8s.minor_version }}/rpm/repodata/repomd.xml.key
+  register: k8s_repo_added
+# zypper --releasever=15.5 dup --download-in-advance --allow-vendor-change -y
+# zypper --releasever=15.5 lr -duE
+
+
+# https://stackoverflow.com/questions/62795930/how-to-install-kubernetes-in-suse-linux-enterprize-server-15-virtual-machines
+# zypper -n install --force kubelet
+- name: Add Extra Zypper Repositories
+  shell: |
+    zypper ar -f  {{ item.repo_url }} {{ item.repo_name }}
+  register: extra_repo_added
+  ignore_errors: yes
+  with_items:
+    - { repo_url: "https://download.opensuse.org/repositories/security:/SELinux_legacy/15.5", repo_name: "SELinux-Legacy" }
+    - { repo_url: "https://download.opensuse.org/distribution/leap/15.5/repo/oss", repo_name: "public" }
+    - { repo_url: "https://download.opensuse.org/repositories/Virtualization:containers/15.5", repo_name: "virt" }
+    - { repo_url: "https://download.opensuse.org/repositories/security:/netfilter/openSUSE_Leap_15.5", repo_name: "conntrack" }
+# zypper addrepo http://download.opensuse.org/distribution/leap/15.5/repo/oss public
+# zypper ar -f  https://download.opensuse.org/repositories/security:/SELinux_legacy/15.5 SELinux-Legacy
+# zypper addrepo https://download.opensuse.org/repositories/Virtualization:/containers/15.6/Virtualization:containers.repo virt
+
+
+- name: Copy Expect Script to Refresh Metadata from Zypper Repository
+  template: src=zypper-refresh.sh.j2 dest=/root/zypper-refresh.sh  mode=0755 owner=root group=root
+  register: expect_file_copied
+
+
+# /root/zypper-refresh.sh
+- name: Refresh Metadata from Zypper Repository
+  shell: |
+    zypper refresh -B
+  register: repo_metadata_refreshed
+  ignore_errors: true
+
+
+- name: Install Container Engine Packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ suse_docker_pkgs }}"
+
+
+- name: Copy Expect Script to Install Kube Packages
+  template: src=install-kube-pkgs.sh.j2 dest=/root/install-kube-pkgs.sh  mode=0755 owner=root group=root
+  register: expect_file_copied
+
+
+- name: Install Kubeadm Packages
+  shell: /root/install-kube-pkgs.sh
+  register: kube_pkgs_installed
+
+
+- name: Install Extra Packages for SELinux Policy and CNI
+  package:
+    name: "{{ item }}"
+    state: present
+  ignore_errors: yes
+  with_items: "{{ suse_extra_pkgs }}"
+
+
+- name: Lock those versions to prevent them from being automatically updated
+  shell: |
+    {{ lock_kube_cmds }}
+  register: lock_kube_command
+
+
+- name: Start the kubelet service
+  shell: |
+    systemctl enable --now kubelet
+  register: enable_kubelet
+

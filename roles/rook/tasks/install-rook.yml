@@ -1,0 +1,172 @@
+---
+- name: Check if the Rook Ceph Source Code Is Already Downloaded
+  stat: path={{ base_path }}/rook
+  register: rook_dir_existed
+- debug: msg={{ rook_dir_existed }}
+
+
+- name: Clone Rook Source Code
+  shell: |
+    git -C "{{ base_path }}" clone --single-branch --branch release-{{ _rook.major_version }}.{{ _rook.minor_version }} https://github.com/rook/rook.git
+  register: git_clone_rook
+  ignore_errors: true
+  when: _rook.clone_git == true and rook_dir_existed.stat.exists != True
+- debug: msg={{ git_clone_rook }}
+  when: print_debug == true and _rook.clone_git == true and rook_dir_existed.stat.exists != True
+
+
+- name: Creae CRDs
+  shell: |
+    kubectl create -f crds.yaml
+  register: create_crds
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/rook/deploy/examples/"
+- debug: msg={{ create_crds }}
+  when: print_debug == true
+
+
+- name: Create Common
+  shell: |
+    kubectl create -f common.yaml
+  register: create_common
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/rook/deploy/examples/"
+- debug: msg={{ create_common }}
+  when: print_debug == true
+
+
+- name: Enable ROOK Discovery Daemon
+  lineinfile:
+    dest: "{{ base_path }}/rook/deploy/examples/operator.yaml"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: "{{ item.state }}"
+  register: enable_rook_discovery_daemon
+  with_items:
+    - { regexp: '^  ROOK_ENABLE_DISCOVERY_DAEMON:*', line: '  ROOK_ENABLE_DISCOVERY_DAEMON: "true"', state: present }
+  when: _rook.enable_discovery_daemon == true
+- debug: msg={{ enable_rook_discovery_daemon }}
+  when: _rook.enable_discovery_daemon == true and print_debug == true
+  #  - { regexp: '^      #hostNetwork: true', line: '      hostNetwork: true', state: present }
+  #  - { regexp: '^  # CSI_ENABLE_HOST_NETWORK:*', line: '  CSI_ENABLE_HOST_NETWORK: "true"', state: present }
+
+
+# https://github.com/rook/rook/issues/14445
+- name: Create Operator
+  shell: |
+    kubectl apply -f operator.yaml
+  register: create_operator
+  args:
+    chdir: "{{ base_path }}/rook/deploy/examples/"
+- debug: msg={{ create_operator }}
+  when: print_debug == true
+
+
+- name: Validate if All Containers are Running
+  shell: kubectl -n rook-ceph get all
+  register: check_operator_containers
+  until: check_operator_containers.stdout.find("ContainerCreating") == -1
+  retries: 60
+- debug: msg={{ check_operator_containers }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/cluster-on-local-pvc.yaml"
+  register: copy_cluster_config_yaml
+  ignore_errors: yes
+  with_items:
+    - "cluster-on-local-pvc-{{ _rook.major_version }}.{{ _rook.minor_version }}.{{ _rook.patch_version }}.yaml"
+- debug: msg={{ copy_cluster_config_yaml }}
+# - rook-pvc-cluster.yaml
+# - rook-host-cluster.yaml
+# - rook-stretch-cluster.yaml
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl create -f cluster-on-local-pvc.yaml
+  register: create_ceph_cluster
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ create_ceph_cluster }}
+  when: print_debug == true
+  # kubectl create -f cluster-on-local-pvc-{{ _rook.major_version }}.{{ _rook.minor_version }}.{{ _rook.patch_version }}.yaml
+
+
+- name: Check if OSD Pod are Running Normally
+  shell: kubectl -n rook-ceph get all | grep pod/rook-ceph-osd-{{ item }}
+  register: check_osd_pod
+  ignore_errors: yes
+  until: check_osd_pod.stdout.find("Running") != -1
+  retries: 100
+  with_sequence: start=0 end=2
+- debug: msg={{ check_osd_pod }}
+  # until: check_create_containers.stdout.find("Terminating") == -1
+  # until: check_create_containers.stdout.find("PodInitializing") == -1
+  # until: check_create_containers.stdout.find("ContainerCreating") == -1
+  # until: check_create_containers.stdout.find("Init") == -1
+
+
+- name: Create Toolbox Pod
+  shell: |
+    kubectl create -f toolbox.yaml
+  register: create_toolbox_pod
+  args:
+    chdir: "{{ base_path }}/rook/deploy/examples/"
+- debug: msg={{ create_toolbox_pod }}
+
+
+- name: Validate if Toolbox Container is Running Normally
+  shell: kubectl -n rook-ceph get pods | grep tool
+  register: check_toolbox_containers
+  until: check_toolbox_containers.stdout.find("ContainerCreating") == -1
+  retries: 10
+- debug: msg={{ check_toolbox_containers }}
+
+
+- name: Print Rook Ceph Tools
+  shell: |
+    kubectl get deploy rook-ceph-tools -n rook-ceph
+  register: print_rook_ceph_tools
+- debug: msg={{ print_rook_ceph_tools }}
+
+
+# kubectl -n rook-ceph get secret rook-ceph-dashboard-password -o jsonpath="{['data']['password']}" | base64 --decode && echo
+
+# $ kubectl -n rook-ceph exec -it $(kubectl -n rook-ceph get pod -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') bash
+# (toolbox)$ ceph -s
+# (toolbox)$ ceph osd status
+
+
+# Create Ceph Filesystem
+# kubectl create -f filesystem.yaml
+
+
+# Check if Rook Ceph is Deployed Successfully
+# kubectl get CephFileSystem -n rook-ceph
+# until: check_rook_deployment.stdout.find("Progressing") == -1
+
+
+# Apply Kube Registry
+# kubectl apply -f csi/cephfs/kube-registry.yaml
+# debug: msg={{ apply_kube_registry }}
+
+
+# Restart All Processes in rook-ceph namespace
+# kubectl rollout restart deployment -n rook-ceph
+
+
+# Check Rook and NGINX Ingress
+# kubectl get events --all-namespaces  --sort-by='.metadata.creationTimestamp'
+
+
+# OSD or OSD Prepare can not be created
+# https://github.com/rook/rook/issues/2916
+# https://stackoverflow.com/questions/62045052/why-cant-find-osd-pod-in-kubernetes-after-deploying-rook-ceph
+# https://1week.tistory.com/16
+

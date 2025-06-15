@@ -1,0 +1,34 @@
+---
+- name: Create Namespace for Ollama
+  shell: |
+    kubectl create namespace {{ _ollama.namespace }}
+  register: create_ollama_ns
+- debug: msg={{ create_ollama_ns }}
+  when: print_debug == true
+
+
+- name: Copy Local PV Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_local_pv_config_yaml
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_local_pv_config_yaml }}
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_local_pv
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+  args:
+    chdir: "{{ base_path }}"
+- debug: msg={{ create_local_pv }}
+  when: print_debug == true
+

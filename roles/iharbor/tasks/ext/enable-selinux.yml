@@ -1,0 +1,30 @@
+---
+- name: Enabling SELinux to be Required
+  selinux:
+    state: permissive
+    policy: targeted
+  register: enable_selinux
+  failed_when: enable_selinux.reboot_required == false
+- debug: msg={{ enable_selinux }}
+  when: print_debug == true
+
+
+- name: Reboot Required - Step 2
+  shell: ( /bin/sleep 5 ; /sbin/shutdown -r now "Ansible updates triggered" ) &
+  async: 30
+  poll: 0
+  notify:
+    - Waiting for Server to Come Back after Restart
+  when: enable_selinux.reboot_required == true
+#- name: Reboot machine and send a message
+#  reboot: msg="Rebooting machine in 5 seconds"
+
+- meta: flush_handlers
+
+
+- name: Check if SELinux has been enabled in Configurtion File
+  command: grep SELINUX /etc/sysconfig/selinux
+  register: sevalue
+- debug: msg={{ sevalue }}
+  when: print_debug == true
+

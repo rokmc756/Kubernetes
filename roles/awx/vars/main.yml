@@ -1,0 +1,68 @@
+base_path: /root
+
+
+_awx:
+  install: true
+  major_version: 2
+  minor_version: 18
+  patch_version: 0
+  build_version:
+  admin_user: "admin"
+  admin_password: "changeme"
+  admin_email: "rokmc756@gmail.com"
+  enable_discovery_daemon: false
+  clone_git: true
+  nvme: true
+  namespace: awx
+  storage_path: "/mnt/awx-storage"
+  storage_class: "awx-storage"
+  k8s:
+    major_version: 1
+    minor_version: 28
+    patch_version: 0
+    build_version:
+  hostname: "awx.jtest.pivotal.io"
+  service:
+    metadata:
+      name: awx-loadbalancer
+      namespace: awx
+    hostname: "awx.jtest.pivotal.io"
+  kernel_parameters:
+    - "net.ipv4.neigh.default.gc_thresh1 = 0"   # For ARP Cache
+  lb:
+    install: true
+    ip_addr: "192.168.1.218"
+
+
+total_awx_containers: 4
+
+
+_helm:
+  enable_repo: true
+  major_version: 3
+  minor_version:
+  patch_version:
+  build_version:
+
+
+_nginx:
+  ingress:
+    install: true
+    name: nginx-ingress
+    class_name: awx-ingress-class
+    namespace: "nginx-ingress"
+    major_version:
+    minor_version:
+    patch_version:
+    replica: 1
+    hostname: awx
+    service: awx-service
+    domain: jtest.pivotal.io
+    ip_addr: "192.168.1.219"
+    port: 80
+  k8s_ingress:
+    major_version: 3
+    minor_version: 0
+    patch_version: 2
+
+

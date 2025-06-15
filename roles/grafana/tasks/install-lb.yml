@@ -1,0 +1,21 @@
+---
+- name: Copy grafana LoadBalancer Config Yaml
+  template:
+    src: grafana-loadbalancer.yaml.j2
+    dest: "{{ base_path }}/grafana-loadbalancer.yaml"
+  register: copy_grafana_lb_config_yaml
+- debug: msg={{ copy_grafana_lb_config_yaml }}
+
+
+- name: Apply grafana Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ _grafana.namespace }} -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ item.ip_addr }}"}}'
+  register: apply_grafana_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "grafana", ip_addr: "{{ _grafana.lb.ip_addr }}" }
+- debug: msg={{ apply_grafana_lb }}
+# kubectl get secret --namespace grafana grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+

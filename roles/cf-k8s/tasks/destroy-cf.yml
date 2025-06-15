@@ -1,0 +1,156 @@
+- name: Destroy CF for K8S
+  shell: |
+    kapp delete -a cf -y
+  register: destroy_cf_for_k8s
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/cf-for-k8s"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ destroy_cf_for_k8s }}
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+  when: print_debug == true
+
+
+- name: Delete Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl delete -f {{ item }}
+  register: delete_pvc
+  ignore_errors: true
+  with_items:
+    - "local-storage-pvc.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-class.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ delete_pvc }}
+  when: print_debug == true
+
+
+- name: Delete Namespace for Persistent Volumes
+  shell: |
+    kubectl delete namespace {{ item }}
+  register: delete_namespace
+  ignore_errors: true
+  with_items:
+    - cf-blobstore
+    - cf-db
+#    - cf-system
+#    - cf-workloads
+#    - cf-workloads-staging
+#    - istio-system
+#    - kpack
+- debug: msg={{ delete_namespace }}
+  when: print_debug == true
+
+
+#- name: Unintall Metrics Server
+#  shell: |
+#    /usr/local/bin/helm uninstall metrics-server -n metrics-server
+#  register: uninstall_metrics_server
+#  ignore_errors: true
+#  args:
+#    chdir: "{{ base_path }}/"
+#- debug: msg={{ uninstall_metrics_server }}
+
+
+#- name: Delete Kpack
+#  shell: |
+#    kubectl delete -f https://github.com/buildpacks-community/kpack/releases/download/v{{ kpack.major_version }}.{{ kpack.minor_version }}.{{ kpack.patch_version }}/release-{{ kpack.major_version }}.{{ kpack.minor_version }}.{{ kpack.patch_version }}.yaml
+#  register: delete_kpack
+#  ignore_errors: true
+#  args:
+#    chdir: "{{ base_path }}/"
+#- debug: msg={{ delete_kpack }}
+
+
+#- name: Validate if Kpack Containers are Running
+#  shell: |
+#    kubectl get pod -n kpack | sed 1d | awk '{print $3}' | sort | uniq
+#  register: check_kpack_containers
+#  until: check_kpack_containers.stdout.find("") != -1
+#  retries: 100
+#  delay: 10
+#- debug: msg={{ check_kpack_containers }}
+#  when: print_debug == true
+
+
+- name: Delete Metrics Server Config Yaml
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_metrics_server_config_yaml
+  ignore_errors: true
+  with_items:
+    - "metrics-server-values.yaml"
+- debug: msg={{ delete_metrics_server_config_yaml }}
+
+
+
+- name: Check if CF-For-K8S is Already Downloaded
+  stat: path={{ base_path }}/cf-for-k8s
+  register: cf_k8s_dir
+- debug: msg={{ cf_k8s_dir }}
+  when: print_debug == true
+
+
+- name: Delete CF for K8s Directory
+  file:
+    path: "{{ base_path }}/cf-for-k8s"
+    state: absent
+  register: delete_cf_k8s_dir
+  when: cf_k8s_dir.stat.exists == true
+- debug: msg={{ delete_cf_k8s_dir }}
+  when: print_debug == true and cf_k8s_dir.stat.exists == true
+
+
+- name: Delete Directory for CF for K8S Persistent Volumes
+  file:
+    path: "/mnt/cf-k8s-storage"
+    state: absent
+  register: delete_k8s_pv_dir
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items:
+    - "{{ groups['all'] }}"
+- debug: msg={{ delete_k8s_pv_dir }}
+  when: print_debug == true
+
+
+#- name: Delete Directory for Database Persistent Volumes
+#  file:
+#    path: "/mnt/cf-db-storage"
+#    state: absent
+#  register: delete_db_pv_dir
+#  delegate_to: "{{ item }}"
+#  delegate_facts: True
+#  with_items:
+#    - "{{ groups['all'] }}"
+#- debug: msg={{ delete_db_pv_dir }}
+#  when: print_debug == true
+
+
+#- name: Delete Directory for Blobstore Persistent Volumes
+#  file:
+#    path: "/mnt/cf-blobstore-storage"
+#    state: absent
+#  register: delete_blobstore_pv_dir
+#  delegate_to: "{{ item }}"
+#  delegate_facts: True
+#  with_items:
+#    - "{{ groups['all'] }}"
+#  when: cf_k8s_dir.stat.exists == true
+#- debug: msg={{ delete_blobstore_pv_dir }}
+#when: print_debug == true
+

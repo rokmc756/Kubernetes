@@ -1,0 +1,31 @@
+- name: Copy Stratos Loadbalancer Config Yaml
+  template:
+    src: stratos-loadbalancer.yaml.j2
+    dest: "{{ base_path }}/stratos-loadbalancer.yaml"
+  register: copy_stratos_lb_config_yaml
+- debug: msg={{ copy_stratos_lb_config_yaml }}
+#  kubectl apply -f stratos-loadbalancer.yaml
+
+
+- name: Apply Stratos Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ _stratos.namespace }} -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ item.lb_ip_addr }}"}}'
+  register: apply_stratos_lb
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "stratos-mariadb", lb_ip_addr: "{{ _stratos.db.ip_addr }}" }
+    - { svc: "stratos-ui-ext", lb_ip_addr: "{{ _stratos.console.ip_addr }}" }
+- debug: msg={{ apply_stratos_lb }}
+  when: print_debug == true
+
+
+- name: Print IP Addresses for LoadBalancer
+  shell: |
+    kubectl get all -A | grep LoadBalancer
+  register: print_lb_ipaddr
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ print_lb_ipaddr }}
+
+

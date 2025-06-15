@@ -1,0 +1,139 @@
+---
+base_path: /root
+
+mysql:
+  ndb:
+    namespace: mysql-ndb
+    redundancy_level: 4
+    storage_path: "/mnt/mysql-ndb-storage"
+    storage_class: "mysql-ndb-storage"
+    mgmd:
+      replica: 2
+      lb_ip_addr: "192.168.1.244"
+    mysqld:
+      replica: 4
+      lb_ip_addr: "192.168.1.245"
+    ndbmtd:
+      replica: 4
+  innodb:
+    namespace: mysql-innodb
+    replica: 3
+    routes: 1
+    storage_path: "/mnt/mysql-innodb-storage"
+    storage_class: "mysql-innodb-storage"
+    lb_ip_addr: "192.168.1.244"
+    primary:
+      lb_ip_addr: "192.168.1.245"
+    secondary:
+      lb_ip_addr: "192.168.1.246"
+  install: true
+  major_version: 10
+  minor_version: 1
+  patch_version: 0
+  build_version:
+  clone_git: true
+  nvme: false
+  lb_ip_addr: "192.168.1.212"
+  storage_path: "/mnt/mysql-storage"
+  db:
+    name: "powerdns"
+    user: "jomoon"
+    password: "changeme"
+  root_password: "changeme"
+  mariabackup_password: "changeme"
+  k8s:
+    major_version: 1
+    minor_version: 30
+    patch_version: 0
+    build_version:
+  hostname: "mysql.jtest.pivotal.io"
+  service:
+    metadata:
+      name: mysql-loadbalancer
+      namespace: mysql
+  ingress:
+    metadata:
+      name: mysql-ingress
+      namespace: nginx-ingress
+    hostname: "mysql.jtest.pivotal.io"
+  kernel_parameters:
+    - "net.ipv4.neigh.default.gc_thresh1 = 0"       # For ARP Cache
+  manager:
+    install: false
+  lb:
+    install: true
+
+
+_phpmyadmin:
+  install: true
+  namespace: phpmyadmin
+  lb_ip_addr: "192.168.1.237"
+  storage_path: "/mnt/phpmyadmin-storage"
+  replica: 1
+  db:
+    name: "powerdns"
+    user: "jomoon"
+    password: "changeme"
+  root_password: "changeme"
+  mariabackup_password: "changeme"
+  hostname: "phpmyadmin.jtest.pivotal.io"
+  service:
+    metadata:
+      name: phpmyadmin-loadbalancer
+      namespace: phpmyadmin
+  ingress:
+    metadata:
+      name: phpmyadmin-ingress
+      namespace: nginx-ingress
+    hostname: "phpmyadmin.jtest.pivotal.io"
+  kernel_parameters:
+    - "net.ipv4.neigh.default.gc_thresh1 = 0"       # For ARP Cache
+  lb:
+    install: true
+    ip_addr: "192.168.1.219"
+
+
+_helm:
+  enable_repo: true
+  major_version: 3
+  minor_version:
+  patch_version:
+  build_version:
+
+
+_cm:
+  install: false
+  major_version: 1
+  minor_version: 7
+  patch_version: 1
+
+
+_nginx:
+  ingress:
+    install: true
+    name: nginx-ingress
+    class_name: phpmyadmin-ingress-class
+    namespace: "nginx-ingress"
+    major_version:
+    minor_version:
+    patch_version:
+    hostname: phpmyadmin
+    domain: jtest.pivotal.io
+    ip_addr: "192.168.1.219"
+    replica: 1
+  k8s_ingress:
+    major_version: 3
+    minor_version: 0
+    patch_version: 2
+
+
+_ssl:
+  dir: "{{ base_path }}/phpmyadmin-certs"
+  days: 3660
+  country: "KR"
+  state: "Seoul"
+  location: "Guro"
+  organization: "Pivotal"
+  common_name: "jest.pivotal.io"
+  email: "rokmc756@gmail.com"
+

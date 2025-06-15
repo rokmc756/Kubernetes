@@ -1,0 +1,87 @@
+---
+base_path: /root
+
+
+_grafana:
+  install: false
+  major_version: 10
+  minor_version: 1
+  patch_version: 0
+  build_version:
+  clone_git: true
+  nvme: true
+  namespace: grafana
+  storage_path: "/mnt/grafana-storage"
+  storage_class: "grafana-storage"
+  replica: 3
+  db:
+    name: "grafana"
+    user: "jomoon"
+    password: "Changeme1234"
+  root_password: "Changeme1234"
+  mariabackup_password: "Changeme1234"
+  k8s:
+    major_version: 1
+    minor_version: 30
+    patch_version: 0
+    build_version:
+  hostname: "grafana.jtest.pivotal.io"
+  service:
+    metadata:
+      name: grafana-loadbalancer
+      namespace: grafana
+  ingress:
+    metadata:
+      name: grafana-ingress
+      namespace: nginx-ingress
+    hostname: "grafana.jtest.pivotal.io"
+  kernel_parameters:
+    - "net.ipv4.neigh.default.gc_thresh1 = 0"       # For ARP Cache
+  lb:
+    install: false
+    ip_addr: "192.168.1.218"
+  admin:
+    replica: 1
+
+
+total_grafana_containers: "{{ _grafana.replica|int + _grafana.admin.replica|int }}"
+
+
+_helm:
+  enable_repo: true
+  major_version: 3
+  minor_version:
+  patch_version:
+  build_version:
+
+
+_nginx:
+  ingress:
+    install: true
+    name: nginx-ingress
+    class_name: grafana-ingress-class
+    namespace: "nginx-ingress"
+    major_version:
+    minor_version:
+    patch_version:
+    hostname: grafana
+    service: grafana
+    port: 80
+    domain: jtest.pivotal.io
+    ip_addr: "192.168.1.219"
+  k8s_ingress:
+    major_version: 3
+    minor_version: 0
+    patch_version: 2
+
+
+_ssl:
+  dir: "{{ base_path }}/grafana-certs"
+  days: 3660
+  country: "KR"
+  state: "Seoul"
+  location: "Guro"
+  organization: "Pivotal"
+  common_name: "jest.pivotal.io"
+  email: "rokmc756@gmail.com"
+

@@ -1,0 +1,29 @@
+---
+- name: Copy ArgoCD LoadBalancer Config Yaml
+  template:
+    src: argocd-loadbalancer.yaml.j2
+    dest: "{{ base_path }}/argocd-loadbalancer.yaml"
+  register: copy_argocd_lb_config_yaml
+- debug: msg={{ copy_argocd_lb_config_yaml }}
+
+
+- name: Apply ArgoCD Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ _argocd.namespace }} -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ item.lb_ip_addr }}"}}'
+  register: apply_argocd_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "argocd-server", lb_ip_addr: "{{ _argocd.lb.ip_addr }}" }
+- debug: msg={{ apply_argocd_lb }}
+
+
+- name: Get the Admin Password
+  shell: |
+    kubectl -n {{ _argocd.namespace }} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode ; echo
+  register: get_admin_password
+  args:
+    chdir: "{{ base_path }}"
+- debug: msg={{ get_admin_password }}
+

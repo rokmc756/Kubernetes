@@ -1,0 +1,44 @@
+---
+- name: Uninstall Kafka UI
+  shell: |
+    /usr/local/bin/helm uninstall kafka-ui -n {{ _kafka_ui.namespace }}
+  register: uninstall_kafka_ui
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ uninstall_kafka_ui }}
+  when: print_debug == true
+
+
+- name: Validate if Kafka UI Containers are Deleted
+  shell: |
+    kubectl get pods -n {{ _kafka_ui.namespace }} | grep kafka-ui | awk '{print $3}' | grep -E 'Terminating|Running' | wc -l
+  register: delete_kafka_ui_container
+  ignore_errors: true
+  until: delete_kafka_ui_container.stdout|int == 0
+  retries: 100
+  delay: 10
+- debug: msg={{ delete_kafka_ui_container }}
+  when: print_debug == true
+
+
+- name: Delete Kafka UI Config Yaml and Directory
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_kafka_ui_config
+  ignore_errors: true
+  with_items:
+    - "kafka-ui-values.yaml"
+- debug: msg={{ delete_kafka_ui_config }}
+  when: print_debug == true
+
+
+- name: Delete Namespace for Kafka UI
+  shell: |
+    kubectl delete namespace {{ _kafka_ui.namespace }}
+  register: delete_kafka_ui_namespace
+  ignore_errors: true
+- debug: msg={{ delete_kafka_ui_namespace }}
+  when: print_debug == true
+

@@ -1,0 +1,86 @@
+---
+- name: Get Certificate Key
+  shell: |
+    kubeadm init phase upload-certs --upload-certs
+  register: get_cert_key
+  when: inventory_hostname in groups['master']
+- debug: msg={{ get_cert_key }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Set Fact for Token CA Certificate
+  set_fact:
+    k8s_cert_key: '{{ get_cert_key.stdout_lines[-1] }}'
+  register: set_cert_key
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items: "{{ groups['all'] }}"
+  when: inventory_hostname in groups['master']
+- debug: msg={{ set_cert_key }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+# kubeadm token create --certificate-key "{{ k8s_cert_key }}" --print-join-command
+- name: Get Command to join cluster
+  shell: |
+    kubeadm token create --print-join-command
+  register: get_join_cmd
+  when: inventory_hostname in groups['master']
+- debug: msg={{ get_join_cmd }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Set Fact for Join Command
+  set_fact:
+    k8s_join_cmd: '{{ get_join_cmd.stdout_lines[-1] }}'
+  register: master_join_cmd
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items: "{{ groups['all'] }}"
+  when: inventory_hostname in groups['master']
+- debug: msg={{ master_join_cmd }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Reset Kubernetes on Cluster Nodes
+  command:  kubeadm reset -f
+  register: kube_cluster_reset
+  when: inventory_hostname in groups['slaves']
+- debug: msg={{ kube_cluster_reset }}
+  when: print_debug == true and inventory_hostname in groups['new_workers']
+
+
+- name: Join New Worker Nodes to Cluster, the Command must be Run on the Master Only
+  shell: |
+    {{ k8s_join_cmd }}
+  register: add_new_masters
+  ignore_errors: yes
+  when: inventory_hostname in groups['new_workers']
+- debug: msg={{ add_new_masters }}
+  when: print_debug == true and inventory_hostname in groups['new_workers']
+
+
+#- name: Enable Your User to Start Using the Cluster
+#  shell: |
+#    rm -rf $HOME/.kube
+#    mkdir -p $HOME/.kube
+#    cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+#    chown $(id -u):$(id -g) $HOME/.kube/config
+#  register: enable_user_kube_env
+#  notify:
+#    - Restart Kubelet
+#    - Restart Containerd
+#  when: inventory_hostname in groups['slaves']
+#- debug: msg={{ enable_user_kube_env }}
+#  when: print_debug == true and inventory_hostname in groups['slaves']
+
+
+- name: Validate If Kubernetes New Worker Nodes Are All Ready
+  shell: kubectl get nodes
+  register: check_k8s_workers_status
+  until: check_k8s_workers_status.stdout.find("NotReady") == -1
+  retries: 30
+  when: inventory_hostname in groups['master']
+- debug: msg={{ check_k8s_workers_status }}
+  when: print_debug == true and inventory_hostname in groups['master']
+

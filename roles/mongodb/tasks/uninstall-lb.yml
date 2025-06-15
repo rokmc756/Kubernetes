@@ -1,0 +1,26 @@
+---
+- name: Delete MongoDB Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ _mongodb.namespace }} -p '{"spec": {"type": "ClusterIP"}}'
+  register: delete_mongodb_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "mongodb-mongodb-sharded", lb_ip_addr: "{{ _mongodb.lb.ip_addr }}" }
+- debug: msg={{ delete_mongodb_lb }}
+  when: print_debug == true
+
+
+- name: Delete Mongo Express Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ _mongo_express.namespace }} -p '{"spec": {"type": "ClusterIP"}}'
+  register: delete_mongo_express_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "mongo-express", lb_ip_addr: "{{ _mongo_express.lb.ip_addr }}" }
+- debug: msg={{ delete_mongo_express_lb }}
+  when: print_debug == true
+

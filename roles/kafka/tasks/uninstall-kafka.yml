@@ -1,0 +1,94 @@
+---
+- name: Uninstall Kafka
+  shell: |
+    /usr/local/bin/helm uninstall kafka -n kafka
+  register: uninstall_kafka
+  ignore_errors: true
+- debug: msg={{ uninstall_kafka }}
+  when: print_debug == true
+
+
+- name: Validate if Kafka Controller Containers are Deleted
+  shell: |
+    kubectl get pods -n kafka | grep kafka-controller | awk '{print $3}' | grep -E 'Terminating|Running' | wc -l
+  register: delete_kafka_controller_container
+  ignore_errors: true
+  until: delete_kafka_controller_container.stdout|int == 0
+  retries: 100
+  delay: 10
+- debug: msg={{ delete_kafka_controller_container }}
+  when: print_debug == true
+
+
+- name: Validate if Kafka Broker Containers are Deleted
+  shell: |
+    kubectl get pods -n kafka | grep kafka-broker | awk '{print $3}' | grep -E 'Terminating|Running' | wc -l
+  register: delete_kafka_broker_container
+  ignore_errors: true
+  until: delete_kafka_broker_container.stdout|int == 0
+  retries: 100
+  delay: 10
+- debug: msg={{ delete_kafka_broker_container }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+- name: Delete Persistent Volumes, Claim and Storage Class
+  shell: |
+    kubectl delete -f {{ item }}
+  register: delete_pvc
+  ignore_errors: true
+  with_items:
+    - "local-storage-pvc.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-class.yaml"
+  args:
+    chdir: "{{ base_path }}"
+- debug: msg={{ delete_pvc }}
+  when: print_debug == true
+
+
+- name: Delete Cluster Local PVC Config Yaml
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_cluster_local_pvc_config_yaml
+  ignore_errors: true
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+    - "kafka-values.yaml"
+- debug: msg={{ delete_cluster_local_pvc_config_yaml }}
+  when: print_debug == true
+
+
+- name: Delete Kafka Helm Config
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_kafka_helm_config
+  with_items:
+    - "kafka-values.yaml"
+- debug: msg={{ delete_kafka_helm_config }}
+
+
+- name: Delete Namespace for Persistent Volumes
+  shell: |
+    kubectl delete namespace {{ _kafka.namespace }}
+  register: delete_namespace
+  ignore_errors: true
+- debug: msg={{ delete_namespace }}
+  when: print_debug == true
+

@@ -1,0 +1,226 @@
+---
+- name: Add Line into /etc/locale.conf for LC_TYPE to Prevent Error
+  lineinfile:
+    path: /etc/locale.conf
+    line: "LC_CTYPE=en_US.UTF-8"
+  ignore_errors: true
+  register: lctype_line_added
+
+
+- name: Lock Versions to Avoid Unwanted Packages Updated
+  shell: |
+    {{ lock_kube_cmds }}
+  register: kube_versions_lock
+
+
+- name: Enable br_netfilter and Overlay Kernel Module for IPTables
+  copy:
+    dest: /etc/modules-load.d/containerd.conf
+    content: |
+      overlay
+      br_netfilter
+
+
+- name: Enable Bridge Module for IPTables to Route Packets into Kubernetes Cluster Nodes
+  template: src=sysctl-k8s.conf.j2 dest=/etc/sysctl.d/sysctl-k8s.conf owner=root group=root mode=644 force=yes
+  register: enable_bridge_module
+
+
+- name: Apply Kernel Parameters for Kubernetes Cluster
+  command: sysctl --system
+
+
+- name: Create Default Containerd Directory
+  file:
+    path: "/etc/containerd"
+    state: directory
+    owner: root
+    group: root
+    mode: 0777
+  register: create_default_containerd_directory
+- debug: msg={{ create_default_containerd_directory }}
+  when: print_debug == true
+
+
+- name: Config Default Containerd
+  shell: |
+    containerd config default > /etc/containerd/config.toml
+
+
+- name: Edit Containerd Configuration
+  lineinfile:
+    dest: /etc/containerd/config.toml
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: "{{ item.state }}"
+  with_items:
+    - { regexp: '            SystemdCgroup = false', line: '            SystemdCgroup = true', state: present, backrefs: no }
+
+
+- name: Creates Docker Directory Under /etc
+  file:
+    path: /etc/docker
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+
+
+- name: Configure the Docker Daemon to Use Systemd for the Management of the Cotainer's CGroups
+  template: src=daemon.json.j2 dest=/etc/docker/daemon.json owner=root group=root mode=644 force=yes
+  register: cgroup_docker_configured
+  notify:
+    - Start Docker
+
+
+- name: Configure the Kubelet Daemon to Use Systemd for the Management of the Cotainer's CGroups
+  template: src=kubelet.j2 dest=/etc/sysconfig/kubelet owner=root group=root mode=644 force=yes
+  register: kubernetes_repo_added
+  notify:
+    - Start Kubelet
+  when: ansible_distribution == "RedHat"
+  # No in SUSE
+  # No in Ubuntu
+
+
+- name: Configure the Kubelet Daemon to Use Systemd for the Management of the Cotainer's CGroups
+  template: src=kubelet.ubt.j2 dest=/etc/default/kubelet owner=root group=root mode=644 force=yes
+  register: config_kubelet
+  notify:
+    - Start Kubelet
+  when: ansible_distribution == "Ubuntu"
+- debug: msg={{ config_kubelet }}
+  when: print_debug == true and ansible_distribution == "Ubuntu"
+  # For Ubuntu Only
+
+
+- name: Copy CGroup Config File
+  template: src=cgconfig.conf.j2 dest=/etc/cgconfig.conf owner=root group=root mode=644 force=yes
+  register: cgroup_config_file_copied
+  when: ansible_distribution == "openSUSE Leap" or ansible_distribution == "RedHat"
+  # No in Ubuntu
+
+
+- name: Create Cluster Configuration in Master Node
+  shell: |
+    kubeadm config print init-defaults | tee {{ k8s.base_path }}/cluster-config.yaml
+  register: cluster_config_created
+  when: inventory_hostname in groups['master']
+
+
+- name: Modify cluster-config.yaml to Replace Cluster IP Address with Control Plane's IP address
+  lineinfile:
+    dest: "{{ k8s.base_path }}/cluster-config.yaml"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: "{{ item.state }}"
+    backrefs: "{{ item.backrefs }}"
+  with_items:
+    - { regexp: "^  name: node", line: "  name: {{ ansible_hostname }}", state: present, backrefs: yes }
+    - { regexp: "^  advertiseAddress: 1.2.3.4", line: "  advertiseAddress: {{ hostvars[inventory_hostname][_netdev]['ipv4']['address'] }}", state: present, backrefs: yes }
+    - { regexp: "^  criSocket: /var/run/dockershim.sock", line: "  criSocket: /run/containerd/containerd.sock", state: present, backrefs: yes }
+  when: inventory_hostname in groups['master']
+
+
+- name: Modify cluster-config.yaml
+  lineinfile:
+    path: "{{ k8s.base_path }}/cluster-config.yaml"
+    line: "{{ item.content }}"
+    insertafter: EOF
+    create: true
+  with_items:
+    - { content: '---' }
+    - { content: 'apiVersion: kubelet.config.k8s.io/v1beta1' }
+    - { content: 'kind: KubeletConfiguration' }
+    - { content: 'cgroupDriver: systemd' }
+  when: inventory_hostname in groups['master']
+
+
+- name: Disable SWAP in Order to initialize Kubernetes Master
+  shell: |
+    swapoff -a
+    sed -i '/swap/s/^/#/g' /etc/fstab
+
+
+- name: Change Kubelet Systemd File
+  template: src=kubelet.systemd.j2 dest=/usr/lib/systemd/system/kubelet.service owner=root group=root mode=644 force=yes
+  register: kubelet_systemd_changed
+  when: ansible_distribution == "Rocky" or ansible_distribution == "RedHat" or ansible_distribution == "CentOS"
+
+
+- name: Add Kubelet Args Line
+  lineinfile:
+    dest: /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
+    line: "Environment=\"KUBELET_EXTRA_ARGS=--fail-swap-on=false\""
+    state: present
+  register: add_kubelet_args_line
+  notify:
+    - Restart Kubelet
+- debug: msg={{ add_kubelet_args_line }}
+  when: print_debug == true
+
+
+#- name: Replace a Line to change MTU for docker0 interface
+#  lineinfile:
+#    dest: /usr/lib/systemd/system/docker.service
+#    regexp: "{{ item.regexp }}"
+#    line: "{{ item.line }}"
+#    state: "{{ item.state }}"
+#  register: replace_conflict_line
+#  with_items:
+#    - { regexp: '^ExecStart=/usr/bin/dockerd', line: 'ExecStart=/usr/bin/dockerd --mtu=9000 -H fd:// --containerd=/run/containerd/containerd.sock', state: present }
+#- debug: msg={{ replace_conflict_line }}
+#  when: print_debug == true
+
+
+- name: Replace the number of LimitNOFILE and LimitNPROC for containerd
+  replace:
+    path: /usr/lib/systemd/system/containerd.service
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.line }}"
+    backup: "{{ item.backup }}"
+  register: replace_nfile_nproc
+  with_items:
+    - { regexp: "^[Service]", line: "[Service]\nLimitNOFILE=1048576\nLimitNPROC=1048576\n",                    state: present, backup: no }
+- debug: msg={{ replace_nfile_nproc }}
+  when: print_debug == true
+
+
+- name: Replace a Line to Comment Conflict for Docker and Containerd
+  lineinfile:
+    dest: /usr/lib/systemd/system/containerd.service
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: "{{ item.state }}"
+  register: replace_conflict_line
+  with_items:
+    - { regexp: '^Conflicts=docker.service', line: '#Conflicts=docker.service', state: present }
+- debug: msg={{ replace_conflict_line }}
+  when: print_debug == true
+
+
+- name: Replace a Line to Comment Conflict for Docker and Containerd
+  lineinfile:
+    dest: /usr/lib/systemd/system/containerd.service
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: "{{ item.state }}"
+  register: replace_conflict_line
+  with_items:
+    - { regexp: '^Conflicts=docker.service', line: '#Conflicts=docker.service', state: present }
+  when: ansible_distribution == "openSUSE Leap" and ansible_distribution_major_version|int <= 15
+- debug: msg={{ replace_conflict_line }}
+  when: print_debug == true and ansible_distribution == "openSUSE Leap" and ansible_distribution_major_version|int <= 15
+
+
+- name: Enable CGroup
+  systemd:
+    name: cgconfig
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  register: enable_cgroup
+  when: ansible_distribution == "openSUSE Leap" and ansible_distribution_major_version|int <= 15
+- debug: msg={{ enable_cgroup }}
+  when: print_debug == true and ansible_distribution == "openSUSE Leap" and ansible_distribution_major_version|int <= 15
+

@@ -1,0 +1,96 @@
+---
+- name: Uninstall MongoDB
+  shell: |
+    /usr/local/bin/helm uninstall mongodb -n mongodb
+  register: uninstall_mongodb
+  ignore_errors: true
+- debug: msg={{ uninstall_mongodb }}
+  when: print_debug == true
+
+
+- name: Validate if Mongos Containers are Deleted Normally
+  shell: |
+    kubectl get pods -n mongodb | grep mongodb-shared-mongos- | awk '{print $3}' | grep -E 'Running|Terminating' | wc -l
+  register: check_mongos_container
+  until: check_mongos_container.stdout|int == 0
+  retries: 100
+  delay: 10
+- debug: msg={{ check_mongos_container }}
+  when: print_debug == true
+
+
+- name: Validate if MongoDB Config Server Containers are Deleted Normally
+  shell: |
+    kubectl get pods -n mongodb | grep mongodb-shared-configsvr- | awk '{print $3}' | grep -E 'Running|Terminating' | wc -l
+  register: check_mongodb_configsvr_container
+  until: check_mongodb_configsvr_container.stdout|int == 0
+  retries: 100
+  delay: 10
+- debug: msg={{ check_mongodb_configsvr_container }}
+  when: print_debug == true
+
+
+- name: Validate if MongoDB Sharded Shard Containers are Deleted Normally
+  shell: |
+    kubectl get pods -n mongodb | grep mongodb-shared-shard | awk '{print $3}' | grep -E 'Running|Terminating' | wc -l
+  register: check_mongodb_sharded_container
+  until: check_mongodb_sharded_container.stdout|int == 0
+  retries: 100
+  delay: 10
+- debug: msg={{ check_mongodb_sharded_container }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  ignore_errors: true
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+- name: Delete Persistent Volumes, Claim and Storage Class
+  shell: |
+    kubectl delete -f {{ item }}
+  register: delete_pvc
+  ignore_errors: true
+  with_items:
+    - "local-storage-pvc.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-class.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ delete_pvc }}
+  when: print_debug == true
+
+
+- name: Delete Cluster Local PVC Config Yaml
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_cluster_local_pvc_config_yaml
+  ignore_errors: true
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ delete_cluster_local_pvc_config_yaml }}
+  when: print_debug == true
+
+
+- name: Delete Namespace for Persistent Volumes
+  shell: |
+    kubectl delete namespace {{ item }}
+  register: delete_namespace
+  ignore_errors: true
+  with_items:
+    - mongodb
+    - istio-system
+- debug: msg={{ delete_namespace }}
+  when: print_debug == true
+

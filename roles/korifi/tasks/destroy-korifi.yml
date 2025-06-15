@@ -1,0 +1,40 @@
+---
+- name: Uninstall Korifi
+  shell: |
+    helm uninstall korifi -n korifi
+  register: uninstall_korifi
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ uninstall_korifi }}
+  when: print_debug == true
+
+
+- name: Delete Namespaces
+  shell: |
+    kubectl delete ns {{ item }}
+  register: delete_ns
+  ignore_errors: true
+  with_items:
+    - korifi
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_ns }}
+  when: print_debug == true
+
+
+- name: Delete Namespaces Config
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_ns_config
+  ignore_errors: true
+  with_items:
+    - "korifi-ns.yaml"
+- debug: msg={{ delete_ns_config }}
+  when: print_debug == true
+

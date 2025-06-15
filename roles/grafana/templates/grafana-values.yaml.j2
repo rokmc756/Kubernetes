@@ -1,0 +1,109 @@
+replicas: {{ _grafana.replica }}
+
+
+service:
+  enabled: true
+  type: ClusterIP
+  # Set the ip family policy to configure dual-stack see [Configure dual-stack](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services)
+  ipFamilyPolicy: ""
+  # Sets the families that should be supported and the order in which they should be applied to ClusterIP as well. Can be IPv4 and/or IPv6.
+  ipFamilies: []
+  loadBalancerIP: ""
+  loadBalancerClass: ""
+  loadBalancerSourceRanges: []
+  port: 80
+  targetPort: 3000
+    # targetPort: 4181 To be used with a proxy extraContainer
+  ## Service annotations. Can be templated.
+  annotations: {}
+  labels: {}
+  portName: service
+  # Adds the appProtocol field to the service. This allows to work with istio protocol selection. Ex: "http" or "tcp"
+  appProtocol: ""
+
+
+serviceMonitor:
+  enabled: false
+  path: /metrics
+  labels: {}
+  interval: 30s
+  scheme: http
+  tlsConfig: {}
+  scrapeTimeout: 30s
+  relabelings: []
+  metricRelabelings: []
+  basicAuth: {}
+  targetLabels: []
+
+
+ingress:
+  enabled: false
+  annotations: {}
+  labels: {}
+  path: /
+  pathType: Prefix
+  hosts:
+    - chart-example.local
+  extraPaths: []
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+
+persistence:
+  type: pvc
+  enabled: true
+  existingClaim: grafana
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  finalizers:
+    - kubernetes.io/pvc-protection
+  extraPvcLabels: {}
+  disableWarning: false
+  inMemory:
+    enabled: false
+  lookupVolumeName: true
+
+
+initChownData:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: library/busybox
+    tag: "1.31.1"
+    sha: ""
+    pullPolicy: IfNotPresent
+
+
+adminUser: admin
+adminPassword: changeme
+
+
+admin:
+  existingSecret: ""
+  userKey: admin-user
+  passwordKey: admin-password
+
+
+ldap:
+  enabled: false
+  existingSecret: ""
+  config: ""
+  # config: |-
+  #   verbose_logging = true
+  #   [[servers]]
+  #   host = "my-ldap-server"
+  #   port = 636
+  #   use_ssl = true
+  #   start_tls = false
+  #   ssl_skip_verify = false
+  #   bind_dn = "uid=%s,ou=users,dc=myorg,dc=com"
+
+
+smtp:
+  existingSecret: ""
+  userKey: "user"
+  passwordKey: "password"
+

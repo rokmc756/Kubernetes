@@ -1,0 +1,107 @@
+replicaCount: {{ _mongo_express.replica }}
+
+image:
+  registry: docker.io
+  repository: mongo-express
+  tag: 1.0.2
+  digest: ""
+  pullPolicy: IfNotPresent
+
+pdb:
+  create: false
+  minAvailable: 1
+  maxUnavailable:
+
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name:
+
+
+deploymentAnnotations: {}
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+priorityClassName:
+runtimeClassName: ""
+topologySpreadConstraints: []
+securityContext: {}
+
+
+containerPorts:
+  http: 8081
+
+
+service:
+  annotations: {}
+  type: ClusterIP
+  loadBalancerIP:
+  loadBalancerSourceRanges:
+  externalTrafficPolicy: Cluster
+  ports:
+    http: 8081
+  nodePorts:
+    http:
+
+
+ingress:
+  enabled: false
+  ingressClassName: ""
+  pathType: ImplementationSpecific
+  annotations: {}
+  hosts:
+    - host: mongo-express.local
+      paths:
+        - /
+  tls: []
+
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+extraArgs: {}
+extraEnvVars: []
+extraEnvVarsCM:
+extraEnvVarsSecret:
+mongodbServer: {{ _mongodb.lb.ip_addr }}
+mongodbPort: 27017
+mongodbEnableAdmin: true
+mongodbAdminUsername: root
+mongodbAdminPassword: "changeme"
+mongodbAuthUsername: "root"
+mongodbAuthPassword: "changeme"
+mongodbAuthDatabase: "admin"
+siteBaseUrl: /
+siteCookieSecret: ""
+siteSessionSecret: ""
+basicAuthUsername: "admin"
+basicAuthPassword: "changeme"
+existingSecret: ""
+existingSecretKeyMongodbAdminPassword: mongodb-admin-password
+existingSecretKeyMongodbAuthPassword: mongodb-auth-password
+existingSecretKeySiteCookieSecret: site-cookie-secret
+existingSecretKeySiteSessionSecret: site-session-secret
+existingSecretKeyBasicAuthPassword: basic-auth-password
+
+
+mongodb:
+  enabled: true
+  persistence:
+    enabled: true
+    storageClass: "{{ _mongo_express.storage_class }}"
+    existingClaim: "mongo-express-mongodb"
+    accessModes:
+      - ReadWriteOnce
+    size: 8Gi
+
+
+tests:
+  image:
+    registry: ghcr.io
+    repository: cowboysysop/pytest
+    tag: 1.0.41
+    digest: ""
+    pullPolicy: IfNotPresent
+

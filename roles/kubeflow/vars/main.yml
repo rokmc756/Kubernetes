@@ -1,0 +1,96 @@
+base_path: /root
+
+_kustomize:
+  install: false
+  download_url: "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
+  major_version: 5
+  minor_version: 4
+  patch_version: 2
+
+
+_kubeflow:
+  install: true
+  deploy: true
+  major_version: 1
+  minor_version: 9
+  patch_version: 1
+  build_version:
+  admin_user: "awxadm"
+  admin_password: "Changeme123!@#"
+  admin_email: "rokmc756@gmail.com"
+  enable_discovery_daemon: false
+  clone_git: true
+  nvme: true
+  namespace: kubeflow
+  nfs_server: "192.168.1.90"
+  nfs_root_dir: /nfs-root
+  lb_ip_addr: "192.168.1.223"
+  storage_path: "/mnt/kubeflow-storage"
+  storage_class: "kubeflow-storage"
+  k8s:
+    major_version: 1
+    minor_version: 29
+    patch_version: 0
+    build_version:
+  hostname: "kubeflow.jtest.pivotal.io"
+  service:
+    metadata:
+      name: kubeflow-loadbalancer
+      namespace: cattle-system
+  ingress:
+    metadata:
+      name: kubeflow-ingress
+      namespace: cattle-system
+    hostname: "kubeflow.jtest.pivotal.io"
+  kernel_parameters:
+    - "net.ipv4.neigh.default.gc_thresh1 = 0"   # For ARP Cache
+    - "fs.inotify.max_user_instances=2280"
+    - "fs.inotify.max_user_watches=1255360"
+  lb:
+    install: true
+    ip_addr: "192.168.1.218"
+
+
+_helm:
+  enable_repo: true
+  major_version: 3
+  minor_version:
+  patch_version:
+  build_version:
+
+
+_nfs_provider:
+  install: true
+  major_version:
+  minor_version:
+  patch_version:
+  server_ip_addr: "192.168.1.90"
+
+
+_nginx:
+  ingress:
+    install: true
+    name: nginx-ingress
+    class_name: kubeflow-ingress-class
+    namespace: "nginx-ingress"
+    major_version:
+    minor_version:
+    patch_version:
+    hostname: kubeflow
+    domain: jtest.pivotal.io
+    # service: "centraldashboard"
+    service: "istio-ingressgateway"
+    ip_addr: "192.168.1.223"
+    port: "80"
+    replica: 1
+  k8s_ingress:
+    major_version: 3
+    minor_version: 0
+    patch_version: 2
+    # kubeflow                    service/centraldashboard                                            ClusterIP      10.104.196.251   <none>          80/TCP
+
+
+cont_pv_dirs:
+  - "katib-storage"
+  - "authservice-storage"
+

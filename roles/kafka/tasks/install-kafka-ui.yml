@@ -1,0 +1,51 @@
+# https://medium.com/@tharukam/simplifying-kafka-ui-your-guide-to-google-oauth-integration-on-kubernetes-0a62edf8fc2d
+# https://pastime2532.tistory.com/257
+# https://docs.kafka-ui.provectus.io/configuration/helm-charts/quick-start
+
+- name: Check if Kafka UI Directory exists
+  stat: path={{ base_path }}/kafka-ui
+  register: kafka_ui_dir
+- debug: msg={{ kafka_ui_dir }}
+  when: print_debug == true
+
+
+- name: Create Namespace for Kafka UI
+  shell: |
+    kubectl create namespace {{ item }}
+  register: create_kafka_ui_namespace
+  with_items:
+    - "{{ _kafka_ui.namespace }}"
+- debug: msg={{ create_kafka_ui_namespace }}
+  when: print_debug == true
+
+
+- name: Copy Kafka UI Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_kafka_ui_config_yaml
+  with_items:
+    - "kafka-ui-values.yaml"
+- debug: msg={{ copy_kafka_ui_config_yaml }}
+
+
+- name: Install Kafka UI
+  shell: |
+    /usr/local/bin/helm install kafka-ui kafka-ui/kafka-ui -n kafka-ui -f {{ base_path }}/kafka-ui-values.yaml
+  register: install_kafka_ui
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ install_kafka_ui }}
+  when: print_debug == true
+
+
+- name: Validate if Kafka UI Container is Running
+  shell: |
+    kubectl get pods -n kafka-ui |  grep kafka-ui | awk '{print $3}' | grep Running | wc -l
+  register: check_kafka_ui_container
+  until: check_kafka_ui_container.stdout|int == 1
+  retries: 100
+  delay: 10
+- debug: msg={{ check_kafka_ui_container }}
+  when: print_debug == true
+

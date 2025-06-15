@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: console-mariadb
+  namespace: {{ _stratos.namespace }}
+spec:
+  storageClassName: {{ _stratos.storage_class }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+

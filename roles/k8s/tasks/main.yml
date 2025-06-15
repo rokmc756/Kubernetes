@@ -1,0 +1,82 @@
+---
+- name: Check OS ( Kubernetes )
+  fail: msg="Not a Red Hat or SuSE or Ubuntu based system!"
+  when: ansible_os_family != 'RedHat' or  ansible_os_family != 'CentOS' or  ansible_os_family != 'Rocky' or ansible_os_family != 'Suse' or ansible_os_family != 'Ubuntu'
+
+
+- name: Set Facts For Network and Packages Informations
+  import_tasks: set-k8s-facts.yml
+  tags: init, reinit, clean, enable, disable, install, uninstall, add, remove, upgrade, deploy, destroy, start, stop, reboot
+
+
+- name: Disable Seicurity Features with SELinux and Firewalld
+  import_tasks: security/disable-security.yml
+  tags: disable, reinit, install
+  when: ( sec is defined and sec == true ) or ( k8s_all is defined and k8s_all == true )
+
+
+- name: Install Kubernetes Packages
+  import_tasks: install-pkgs.yml
+  tags: install
+  when: ( pkgs is defined and pkgs == true ) or ( k8s_all is defined and k8s_all == true )
+
+
+- name: Configure Kubernetes Packages
+  import_tasks: config-kube.yml
+  tags: install
+  when: ( config is defined and config == true ) or ( k8s_all is defined and k8s_all == true )
+
+
+- name: Initialize Kubernetes Cluster
+  import_tasks: init-k8s.yml
+  tags: init, install
+  when: ( kube is defined and kube == true ) or ( k8s_all is defined and k8s_all == true )
+
+
+- name: Install Metallb
+  import_tasks: ext/install-metallb.yml
+  tags: setup, create, install
+  when: (( lb is defined and lb == true ) or ( k8s_all is defined and k8s_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Reinitialize Kubernetes Cluster
+  import_tasks: reinit-k8s.yml
+  tags: reinit
+  when: ( kube is defined and kube == true ) or ( k8s_all is defined and k8s_all == true )
+
+
+- name: Uninstall Metallb
+  import_tasks: ext/uninstall-metallb.yml
+  tags: remove, delete, uninstall
+  when: (( lb is defined and lb == true ) or ( k8s_all is defined and k8s_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Stop Docker and Kube Services
+  import_tasks: services/stop-kube-services.yml
+  tags: uninstall, clean
+  when: ( kube is defined and kube == true ) or ( k8s_all is defined and k8s_all == true )
+
+
+- name: Uninstall Prerequistes Packages
+  import_tasks: uninstall-pkgs.yml
+  tags: uninstall
+  when: ( pkgs is defined and pkgs == true ) or ( k8s_all is defined and k8s_all == true )
+
+
+- name: Delete Kube Config Files
+  import_tasks: uninstall-configs.yml
+  tags: uninstall
+  when: ( config is defined and config == true ) or ( k8s_all is defined and k8s_all == true )
+
+
+- name: Reboot All Systems
+  import_tasks: reboot-required.yml
+  tags: uninstall, clean
+  when: ( reboot is defined and reboot == true ) or ( k8s_all is defined and k8s_all == true )
+
+
+- name: Add/Remove Additional Master or Slave Nodes
+  import_tasks: ext/main.yml
+  tags: add, install
+  when: ( master is defined and master == true ) or ( worker is defined and worker == true )
+

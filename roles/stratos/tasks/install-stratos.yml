@@ -1,0 +1,58 @@
+---
+- name: Create Namespace for Persistent Volumes
+  shell: |
+    kubectl create namespace {{ _stratos.namespace }}
+  register: create_namespace
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "stratos-values.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+  #  - "local-storage-pvc.yaml"
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_pvc
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+  args:
+    chdir: "{{ base_path }}"
+- debug: msg={{ create_pvc }}
+  when: print_debug == true
+  # - "local-storage-pvc.yaml"
+
+
+- name: Deploy Stratos
+  shell: |
+    /usr/local/bin/helm install stratos stratos/console -n {{ _stratos.namespace }} -f {{ base_path }}/stratos-values.yaml
+  register: deploy_stratos
+  args:
+    chdir: "{{ base_path }}"
+- debug: msg={{ deploy_stratos }}
+  when: print_debug == true
+
+
+- name: Validate if Stratos Containers are Running
+  shell: |
+    kubectl get pods -n {{ _stratos.namespace }} | grep -E '{{ item.svc }}' | awk '{print $3}' | grep {{ item.grep }} | wc -l
+  register: check_stratos_containers
+  until: check_stratos_containers.stdout|int == item.replica|int
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "^stratos-", replica: "{{ _stratos.db.replica|int + _stratos.console.replica|int }}", grep: "Running" }
+- debug: msg={{ check_stratos_containers }}
+  when: print_debug == true
+

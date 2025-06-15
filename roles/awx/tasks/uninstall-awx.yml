@@ -1,0 +1,68 @@
+---
+- name: Delete AWX
+  shell: |
+    kubectl delete -f ansible-awx.yaml
+  register: delete_awx
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ delete_awx }}
+  when: print_debug == true
+
+
+- name: Delete AWX Config Yaml
+  file:
+    path: "{{ base_path }}/ansible-awx.yaml"
+    state: absent
+  register: delete_awx_config_yaml
+  ignore_errors: true
+- debug: msg={{ delete_awx_config_yaml }}
+
+
+- name: Delete Local Storage and Persistent Volumes
+  shell: |
+    kubectl delete -f {{ item }}
+  register: delete_local_storage
+  ignore_errors: true
+  with_items:
+    - "local-storage-pvc.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-class.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ delete_local_storage }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  file:
+    path: "{{ item }}"
+    state: absent
+  register: delete_cluster_local_pvc_config_yaml
+  ignore_errors: yes
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+    - "ansible-awx.yaml"
+- debug: msg={{ delete_cluster_local_pvc_config_yaml }}
+  when: print_debug == true
+
+
+- name: Uninsatll AWX Operator
+  shell: |
+    /usr/local/bin/helm uninstall awx-operator
+  register: uninstall_awx_operator
+  ignore_errors: yes
+- debug: msg={{ uninstall_awx_operator }}
+  when: print_debug == true
+
+
+- name: Delete Namespace for Persistent Volumes
+  shell: |
+    kubectl delete namespace {{ _awx.namespace }}
+  register: delete_namespace
+  ignore_errors: true
+- debug: msg={{ delete_namespace }}
+  when: print_debug == true
+

@@ -1,0 +1,239 @@
+# https://blog.andreev.it/2023/10/install-metallb-on-kubernetes-cluster-running-on-vmware-vms-or-bare-metal-server/
+
+- name: Delete Secret
+  shell: |
+    kubectl delete -f /root/tls.yaml
+  register: delete_secret
+  ignore_errors: yes
+- debug: msg={{ delete_secret }}
+  when: print_debug == true
+
+
+- name: Remove TLS Cert and Key
+  shell:
+    rm -f /root/tls.yaml
+  register: remove_secret_file
+  ignore_errors: yes
+- debug: msg={{ remove_secret_file }}
+  when: print_debug == true
+
+
+- name: Remove Doman Private Key
+  shell: |
+    rm -f /root/star.jtest.suse.com.chain.crt
+  register: encode_domain_private_key
+  ignore_errors: yes
+- debug: msg={{ encode_domain_private_key }}
+  when: print_debug == true
+
+
+# Encode both the domain certificate chain file and the domain private key file.
+- name: Remove Domain Certificate Chain
+  shell: |
+    rm -f /root/star.jtest.suse.com.key
+  register: remove_domain_cert_chain
+  ignore_errors: yes
+- debug: msg={{ remove_domain_cert_chain }}
+  when: print_debug == true
+
+
+- name: Remove the certificate and the CA certificate in a single file
+  shell: |
+    rm -f /root/star.jtest.suse.com.crt rootCA.crt
+  register: remove_cert_ca
+  ignore_errors: yes
+- debug: msg={{ remove_cert_ca }}
+  when: print_debug == true
+
+
+- name: Remove v3 ext file
+  shell: |
+    rm -f /root/v3.ext
+  register: remove_v3_ext
+  ignore_errors: yes
+- debug: msg={{ remove_v3_ext }}
+  when: print_debug == true
+
+
+- name: Remove Ingress Demo Yaml
+  shell: |
+    rm -f /root/ingress-demo.yaml
+  register: remove_ingress_demo_yaml
+  ignore_errors: yes
+- debug: msg={{ remove_ingress_demo_yaml }}
+  when: print_debug == true
+
+
+- name: Remove Demo Local Yaml
+  shell: |
+    rm -f /root/demo-local.yaml
+  register: remove_demo_local_yaml
+  ignore_errors: yes
+- debug: msg={{ remove_demo_local_yaml }}
+  when: print_debug == true
+
+
+- name: Delete Apache HTTPD Server Ingress
+  shell: |
+    kubectl delete ingress httpd
+  register: delete_apache_server_ingress
+  ignore_errors: yes
+- debug: msg={{ delete_apache_server_ingress }}
+  when: print_debug == true
+  #  kubectl create ingress httpd --class=nginx --rule httpd.jtest.suse.com/=httpd:80
+
+
+#- name: Expose Apache HTTPD Server
+#  shell: |
+#    kubectl expose deployment httpd
+#  register: expose_apache_server
+#- debug: msg={{ expose_apache_server }}
+
+
+- name: Delete NGINX Web Server
+  shell: |
+    kubectl delete deployment nginx
+  register: delete_nginx_web_server
+  ignore_errors: yes
+- debug: msg={{ delete_nginx_web_server }}
+  when: print_debug == true
+# kubectl create deployment nginx --image=nginx --port=80
+
+
+- name: Delete NGINX Ingress Reverse Proxy
+  shell: |
+    kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
+  register: install_nginx_ingress_reverse_proxy
+  ignore_errors: yes
+#- debug: msg={{ delete_nginx_ingress_reverse_proxy }}
+
+
+# Check the load balancer service.
+# …and if you go to that IP (192.168.0.210) in your browser, you’ll see the IP of the pods that the load balancer hits.
+- name: Check Load Balancer Service
+  shell: |
+    kubectl get svc
+  register: check_lb_service
+  ignore_errors: yes
+- debug: msg={{ check_lb_service }}
+  when: print_debug == true
+
+
+# Then, let’s Delete Apache server that runs on the same IP and same port 80.
+- name: Delete Apache HTTPD Server
+  shell: |
+    kubectl delete deployment httpd
+  register: delete_apache_httpd_server
+  ignore_errors: yes
+- debug: msg={{ delete_apache_httpd_server }}
+  when: print_debug == true
+  #  kubectl create deployment httpd --image=httpd --port=80
+
+
+- name: Delete NGINX Ingress
+  shell: |
+    kubectl delete ingress nginx
+  register: delete_nginx_ingress
+  ignore_errors: yes
+- debug: msg={{ delete_nginx_ingress }}
+  when: print_debug == true
+  # kubectl create ingress nginx --class=nginx --rule nginx.jtest.suse.com/=nginx:80
+
+
+#- name: Expose NGINX Web Server
+#  shell: |
+#    kubectl expose deployment nginx
+#  register: expose_nginx_web_server
+#- debug: msg={{ expose_nginx_web_server }}
+
+
+- name: Delete Simple App
+  shell: |
+    kubectl delete -f /root/demo.yaml
+  register: delete_simple_app
+  ignore_errors: yes
+- debug: msg={{ delete_simple_app }}
+  when: print_debug == true
+
+
+- name: Delete Demo Yaml
+  shell: |
+    /root/demo.yaml
+  register: delete_demo_yaml
+  ignore_errors: yes
+- debug: msg={{ delete_demo_yaml }}
+  when: print_debug == true
+
+
+- name: Deploy Metallb with Configuration
+  shell: |
+    kubectl delete -f lb-config.yaml
+  register: delete_metallb_config
+  ignore_errors: yes
+- debug: msg={{ delete_metallb_config }}
+  when: print_debug == true
+
+
+- name: Delete Metallb Config
+  shell: |
+    rm -f /root/lb-config.yaml
+  register: delete_metallb_ips
+  ignore_errors: yes
+- debug: msg={{ delete_metallb_config }}
+  when: print_debug == true
+
+
+- name: Check the pods running in metallb-system namespace.
+  shell: |
+    kubectl get pods -n metallb-system
+  register: check_metallb_pods
+  ignore_errors: yes
+- debug: msg={{ check_metallb_pods }}
+  when: print_debug == true
+
+
+- name: Delete MetalLB
+  shell: |
+    kubectl delete -f https://raw.githubusercontent.com/metallb/metallb/v0.13.11/config/manifests/metallb-native.yaml
+  register: delete_metallb
+  ignore_errors: yes
+- debug: msg={{ delete_metallb }}
+  when: print_debug == true
+
+
+- name: Rollback strictARP
+  shell: |
+    kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: true/strictARP: false/" | kubectl apply -f - -n kube-system
+  register: rollback_strict_arp
+  ignore_errors: yes
+- debug: msg={{ rollback_strict_arp }}
+  when: print_debug == true
+
+# Do this first on the master.
+# kubectl edit configmap -n kube-system kube-proxy
+# apiVersion: kubeproxy.config.k8s.io/v1alpha1
+# kind: KubeProxyConfiguration
+# mode: "ipvs"
+# ipvs:
+#  strictARP: false
+
+
+- name: Check Demo Pods are still terminating
+  shell: kubectl get all | grep "demo-"
+  register: check_demo_pods
+  until: check_demo_pods.stdout.find("Terminating") == -1
+  retries: 30
+  when: inventory_hostname in groups['master']
+#- debug: msg={{ check_demo_pods.stdout }}
+#  when: print_debug == true
+
+
+- name: Delete Remaining Services
+  shell: |
+    kubectl delete svc nginx
+    kubectl delete svc httpd
+    kubectl delete svc demo
+  register: delete_remain_services
+  when: inventory_hostname in groups['master']
+- debug: msg={{ delete_remain_service }}
+  when: print_debug == true

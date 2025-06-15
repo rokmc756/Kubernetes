@@ -1,0 +1,148 @@
+---
+#- name: Delete Docker Register Secret
+#  shell: |
+#    kubectl -n cf delete secret image-registry-credentials
+#  register: delete_docker_secret
+#  ignore_errors: true
+#  args:
+#    chdir: "{{ base_path }}/"
+#  environment:
+#    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+#- debug: msg={{ delete_docker_secret }}
+#  when: print_debug == true
+
+
+- name: Unintall Metrics Server
+  shell: |
+    helm uninstall metrics-server -n metrics-server
+  register: uninstall_metrics_server
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ uninstall_metrics_server }}
+
+
+- name: Delete Metrics Server Config Yaml
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_metrics_server_config_yaml
+  ignore_errors: true
+  with_items:
+    - "metrics-server-values.yaml"
+- debug: msg={{ delete_metrics_server_config_yaml }}
+
+
+- name: Create Namespaces
+  shell: |
+    kubectl delete -f {{ item }}
+  register: create_namespaces
+  ignore_errors: true
+  with_items:
+    - "gateway-class-name.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ create_namespaces }}
+  when: print_debug == true
+
+
+- name: Delete Service Binding Runtime
+  shell: |
+    kubectl delete -f \
+    https://github.com/servicebinding/runtime/releases/download/v{{ _servicebinding.major_version }}.{{ _servicebinding.minor_version }}.{{ _servicebinding.patch_version }}/servicebinding-runtime-v{{ _servicebinding.major_version }}.{{ _servicebinding.minor_version }}.{{ _servicebinding.patch_version }}.yaml
+  register: delete_service_binding_runtime
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_service_binding_runtime }}
+
+
+- name: Unintall Contour
+  shell: |
+    kubectl delete -f https://raw.githubusercontent.com/projectcontour/contour/release-1.30/examples/render/contour-gateway-provisioner.yaml
+  register: uninstall_contour
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ uninstall_contour }}
+  when: print_debug == true
+  # kubectl delete -f https://projectcontour.io/quickstart/contour.yaml
+  # helm uninstall contour -n projectcontour
+
+
+- name: Delete Kpack
+  shell: |
+    kubectl delete -f \
+    https://github.com/buildpacks-community/kpack/releases/download/v{{ _kpack.major_version }}.{{ _kpack.minor_version }}.{{ _kpack.patch_version }}/release-{{ _kpack.major_version }}.{{ _kpack.minor_version }}.{{ _kpack.patch_version }}.yaml
+  register: delete_kpack
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_kpack }}
+  when: print_debug == true
+
+
+- name: Delete CF Namespace
+  shell: |
+    kubectl delete ns cf --grace-period=0 --force &
+    sleep 10
+  register: delete_cf_ns
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_cf_ns }}
+  when: print_debug == true
+
+
+- name: Force Delete CF Namespace
+  shell: |
+    kubectl get namespace "cf" -o json   | tr -d "\n" | sed "s/\"finalizers\": \[[^]]\+\]/\"finalizers\": []/" | \
+    kubectl replace --raw /api/v1/namespaces/cf/finalize -f -
+  register: force_delete_cf_ns
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ force_delete_cf_ns }}
+  when: print_debug == true
+
+
+- name: Delete Namespaces Config
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_namespaces_config
+  ignore_errors: true
+  with_items:
+    - "cf-ns.yaml"
+    - "gateway-class-name.yaml"
+- debug: msg={{ delete_namespaces_config }}
+  when: print_debug == true
+
+
+- name: Unintall Reflector
+  shell: |
+    helm uninstall reflector -n reflector
+  register: uninstall_reflector
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ uninstall_reflector }}
+  when: print_debug == true
+  # kubectl -n kube-system delete -f https://github.com/emberstack/kubernetes-reflector/releases/latest/download/reflector.yaml
+

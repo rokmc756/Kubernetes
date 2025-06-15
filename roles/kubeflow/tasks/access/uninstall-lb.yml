@@ -1,0 +1,13 @@
+---
+- name: Delete ISTIO Ingress Gateway Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ item.ns }} -p '{"spec": {"type": "ClusterIP"}}'
+  register: delete_kubeflow_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { ns: "istio-system", svc: "istio-ingressgateway", lb_ip_addr: "{{ _kubeflow.lb.ip_addr }}" }
+- debug: msg={{ delete_kubeflow_lb }}
+  when: print_debug == true
+

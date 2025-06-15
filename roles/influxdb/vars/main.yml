@@ -1,0 +1,68 @@
+base_path: /root
+
+
+_kustomize:
+  install: true
+  download_url: "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
+  major_version: 5
+  minor_version: 4
+  patch_version: 2
+
+
+_influxdb:
+  install: true
+  major_version:
+  minor_version:
+  patch_version:
+  build_version:
+  admin_user: "admin"
+  admin_password: "changeme"
+  admin_email: "rokmc756@gmail.com"
+  enable_discovery_daemon: false
+  clone_git: true
+  nvme: true
+  namespace: influxdb
+  storage_path: "/mnt/influxdb-storage"
+  storage_class: "influxdb-storage"
+  k8s:
+    major_version: 1
+    minor_version: 28
+    patch_version: 0
+    build_version:
+  hostname: "influxdb.jtest.pivotal.io"
+  service:
+    metadata:
+      name: influxdb-loadbalancer
+      namespace: influxdb
+  ingress:
+    metadata:
+      name: influxdb-ingress
+      namespace: influxdb
+    hostname: "influxdb.jtest.pivotal.io"
+  kernel_parameters:
+    - "net.ipv4.neigh.default.gc_thresh1 = 0"   # For ARP Cache
+    - "fs.inotify.max_user_instances=2280"
+    - "fs.inotify.max_user_watches=755360"
+  lb:
+    install: true
+    ip_addr: 192.168.1.219
+  replica: 1
+  collectd:
+    install: true
+    ip_addr: 192.168.1.220
+  metrics:
+    install: true
+    ip_addr: 192.168.1.221
+
+
+total_influxdb_containers: "{{ _influxdb.replica|int }}"
+
+
+_helm:
+  enable_repo: true
+  major_version: 3
+  minor_version:
+  patch_version:
+  build_version:
+
+

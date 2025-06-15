@@ -1,0 +1,47 @@
+- name: Check if Open Web UI Directory exists
+  stat: path={{ base_path }}/open-webui
+  register: open_webui_dir
+- debug: msg={{ open_webui_dir }}
+  when: print_debug == true
+
+
+- name: Create Namespace for Open Web UI
+  shell: |
+    kubectl create namespace {{ item }}
+  register: create_open_webui_namespace
+  with_items:
+    - "{{ _open_webui.namespace }}"
+- debug: msg={{ create_open_webui_namespace }}
+  when: print_debug == true
+
+
+- name: Copy Open Web UI Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_open_webui_config_yaml
+  with_items:
+    - "open-webui-values.yaml"
+- debug: msg={{ copy_open_webui_config_yaml }}
+
+
+- name: Install Open Web UI
+  shell: |
+    /usr/local/bin/helm install open-webui open-webui/open-webui -n open-webui -f {{ base_path }}/open-webui-values.yaml
+  register: install_open_webui
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ install_open_webui }}
+  when: print_debug == true
+
+
+- name: Validate if Open Web UI Container is Running
+  shell: |
+    kubectl get pods -n open-webui |  grep open-webui | awk '{print $3}' | grep Running | wc -l
+  register: check_open_webui_container
+  until: check_open_webui_container.stdout|int == 1
+  retries: 100
+  delay: 10
+- debug: msg={{ check_open_webui_container }}
+  when: print_debug == true
+

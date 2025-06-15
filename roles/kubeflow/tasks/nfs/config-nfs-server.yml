@@ -1,0 +1,42 @@
+---
+- name: Create NFS Directory
+  file:
+    path: "{{ _kubeflow.nfs_root_dir }}"
+    state: directory
+    mode: 0777
+
+
+- name: Install NFS Server
+  package:
+    name: nfs-utils
+    state: latest
+
+
+- name: Export NFS Config
+  lineinfile:
+    path: /etc/exports
+    line: "{{ item }}"
+  with_items:
+    - "/nfs-root {{ ipaddr0 }}/{{ netmask0 }}(rw,sync,no_subtree_check,no_root_squash)"
+    - "/nfs-root {{ ipaddr1 }}/{{ netmask1 }}(rw,sync,no_subtree_check,no_root_squash)"
+    - "/nfs-root {{ ipaddr2 }}/{{ netmask2 }}(rw,sync,no_subtree_check,no_root_squash)"
+
+
+- name: Start NFS Server
+  service:
+    name: nfs-server
+    state: started
+
+
+- name: Enable NFS Ports for Firewalld
+  firewalld:
+    service: "{{ item }}"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  ignore_errors: true
+  with_items:
+    - nfs
+    - mountd
+    - rpc-bind
+

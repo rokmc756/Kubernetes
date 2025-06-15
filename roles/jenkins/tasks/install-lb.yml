@@ -1,0 +1,37 @@
+---
+- name: Copy Jenkins Loadbalancer Config Yaml
+  template:
+    src: jenkins-loadbalancer.yaml.j2
+    dest: "{{ base_path }}/jenkins-loadbalancer.yaml"
+  register: copy_jenkins_lb_config_yaml
+- debug: msg={{ copy_jenkins_lb_config_yaml }}
+
+
+- name: Apply Jenkins Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ _jenkins.namespace }} -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ item.lb_ip_addr }}"}}'
+  register: apply_jenkins_lb
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "jenkins", lb_ip_addr: "{{ _jenkins.lb.ip_addr }}" }
+- debug: msg={{ apply_jenkins_lb }}
+  when: print_debug == true
+
+
+- name: Print IP Addresses for LoadBalancer
+  shell: |
+    kubectl get all -A | grep LoadBalancer
+  register: print_lb_ipaddr
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ print_lb_ipaddr }}
+
+
+- name: Print Jenkins Admin Password
+  shell: |
+    printf $(kubectl get secret --namespace jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo
+  register: print_jenkins_admin_password
+- debug: msg={{ print_jenkins_admin_password }}
+  when: print_debug == true
+

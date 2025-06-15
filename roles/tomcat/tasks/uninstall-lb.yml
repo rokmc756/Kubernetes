@@ -1,0 +1,23 @@
+---
+- name: Copy MinIO Loadbalancer Config Yaml
+  template:
+    src: tomcat-loadbalancer.yaml.j2
+    dest: "{{ base_path }}/tomcat-loadbalancer.yaml"
+  register: copy_tomcat_lb_config_yaml
+  ignore_errors: true
+- debug: msg={{ copy_tomcat_lb_config_yaml }}
+
+
+- name: Delete MinIO Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ _tomcat.namespace }} -p '{"spec": {"type": "ClusterIP"}}'
+  register: delete_tomcat_lb
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "tomcat", lb_ip_addr: "{{ _tomcat.lb.ip_addr }}" }
+- debug: msg={{ delete_tomcat_lb }}
+  ignore_errors: true
+  when: print_debug == true
+

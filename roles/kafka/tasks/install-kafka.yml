@@ -1,0 +1,88 @@
+---
+- name: Create Namespace for Persistent Volumes
+  shell: |
+    kubectl create namespace {{ _kafka.namespace }}
+  register: create_namespace
+  # with_items:
+  #  - kafka
+  #  - istio-system
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_pvc
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ create_pvc }}
+  when: print_debug == true
+
+
+# --set persistence.existingClaim={data-kafka-redis-0,data-kafka-trivy-0,database-data-kafka-database-0,kafka-jobservice,kafka-registry} \
+# --set externalAccess.controller.service.type=NodePort \
+# --set externalAccess.autoDiscovery.enabled=true \
+# --set externalAccess.controller.service.domain=ingress-ip \
+
+
+- name: Copy Kafka Helm Config
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_kafka_helm_config
+  with_items:
+    - "kafka-values.yaml"
+- debug: msg={{ copy_kafka_helm_config }}
+
+
+- name: Deploy Kafka
+  shell: |
+    /usr/local/bin/helm install kafka bitnami/kafka -n kafka  -f {{ base_path }}/kafka-values.yaml
+  register: deploy_kafka
+- debug: msg={{ deploy_kafka }}
+  when: print_debug == true
+# --version {{ _kafka.major_version }}.{{ _kafka.minor_version }}.{{ _kafka.patch_version }}
+# 'zookeeper:\n  enabled: true'
+# 'kraft:\n  enabled: true'
+# 'provisioning:\n  enabled: false'
+
+
+- name: Validate if Kafka Controller Containers are Running
+  shell: |
+    kubectl get pods -n kafka |  grep kafka-controller | awk '{print $3}' | grep Running | wc -l
+  register: check_kafka_controller_container
+  until: check_kafka_controller_container.stdout|int == _kafka.controller.replica|int
+  retries: 100
+  delay: 10
+- debug: msg={{ check_kafka_controller_container }}
+  when: print_debug == true
+
+
+- name: Validate if Kafka Broker Containers are Running
+  shell: |
+    kubectl get pods -n kafka |  grep kafka-broker | awk '{print $3}' | grep Running | wc -l
+  register: check_kafka_broker_container
+  until: check_kafka_broker_container.stdout|int == _kafka.broker.replica|int
+  retries: 100
+  delay: 10
+- debug: msg={{ check_kafka_broker_container }}
+  when: print_debug == true
+
+

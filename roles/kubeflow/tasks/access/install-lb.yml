@@ -1,0 +1,13 @@
+---
+- name: Apply ISTIO Ingress Gateway Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ item.ns }} -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ item.lb_ip_addr }}"}}'
+  register: apply_mongodb_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { ns: "istio-system", svc: "istio-ingressgateway", lb_ip_addr: "{{ _kubeflow.lb.ip_addr }}" }
+- debug: msg={{ apply_mongodb_lb }}
+  when: print_debug == true
+

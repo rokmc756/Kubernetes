@@ -1,0 +1,72 @@
+# https://www.cnblogs.com/liugp/p/16726178.html
+
+- name: Create Namespace for Persistent Volumes
+  shell: |
+    kubectl create namespace {{ _hadoop.namespace }}
+  register: create_namespace
+  #with_items:
+  #  - hadoop
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+   #  - istio-system
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_pvc
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ create_pvc }}
+  when: print_debug == true
+
+
+- name: Copy Hadoop Helm Config
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_hadoop_helm_config
+  with_items:
+    - "hadoop-values.yaml"
+- debug: msg={{ copy_hadoop_helm_config }}
+
+
+- name: Deploy Hadoop
+  shell: |
+    /usr/local/bin/helm install hadoop -n {{ _hadoop.namespace }} apache-hadoop-helm/hadoop -f {{ base_path }}/hadoop-values.yaml
+  register: deploy_hadoop
+- debug: msg={{ deploy_hadoop }}
+  when: print_debug == true
+
+
+- name: Validate if Hadoop Controller Containers are Running
+  shell: |
+    kubectl get pods -n {{ _hadoop.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep Running | wc -l
+  register: check_hadoop_containers
+  until: check_hadoop_containers.stdout|int == item.replica|int
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "hadoop-hdfs-nn", replica: "{{ _hadoop.hdfs.nn.replica }}" }
+    - { svc: "hadoop-hdfs-dn", replica: "{{ _hadoop.hdfs.dn.replica }}" }
+    - { svc: "hadoop-yarn-rm", replica: "{{ _hadoop.yarn.rm.replica }}" }
+    - { svc: "hadoop-yarn-nm", replica: "{{ _hadoop.yarn.nm.replica }}" }
+- debug: msg={{ check_hadoop_containers }}
+  when: print_debug == true
+

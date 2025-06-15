@@ -1,0 +1,234 @@
+# https://www.devopsschool.com/blog/getting-started-with-cloud-foundry-for-kubernetes-using-cf-for-k8s-in-linuxubuntu/
+# https://hub.docker.com/r/cloudfoundry/oratos-metrics-server-cf-for-k8s/tags
+
+- name: Create Directory for CF for K8S Persistent Volumes
+  file:
+    path: "/mnt/cf-k8s-storage"
+    state: directory
+    owner: root
+    group: root
+    mode: 0777
+  register: create_k8s_pv_dir
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items:
+    - "{{ groups['all'] }}"
+- debug: msg={{ create_k8s_pv_dir }}
+  when: print_debug == true
+
+
+#- name: Intall Kpack
+#  shell: |
+#    kubectl apply -f https://github.com/buildpacks-community/kpack/releases/download/v{{ kpack.major_version }}.{{ kpack.minor_version }}.{{ kpack.patch_version }}/release-{{ kpack.major_version }}.{{ kpack.minor_version }}.{{ kpack.patch_version }}.yaml
+#  register: install_kpack
+#  args:
+#    chdir: "{{ base_path }}/"
+#- debug: msg={{ install_kpack }}
+
+
+#- name: Validate if Kpack Containers are Running
+#  shell: |
+#    kubectl get pod -n kpack | sed 1d | awk '{print $3}' | sort | uniq
+#  register: check_kpack_containers
+#  until: check_kpack_containers.stdout.find("Running") != -1
+#  retries: 100
+#  delay: 10
+#- debug: msg={{ check_kpack_containers }}
+#  when: print_debug == true
+
+
+- name: Create Namespace for Persistent Volumes
+  shell: |
+    kubectl create namespace {{ item }}
+  register: create_namespace
+  with_items:
+    - cf-blobstore
+    - cf-db
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_pvc
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ create_pvc }}
+  when: print_debug == true
+
+
+- name: Check if CF-For-K8S is Already Downloaded
+  stat: path={{ base_path }}/cf-for-k8s
+  register: cf_k8s_dir
+- debug: msg={{ cf_k8s_dir }}
+
+
+# \
+# --branch v{{ cf_k8s.major_version }}.{{ cf_k8s.minor_version }}.{{ cf_k8s.patch_version }}
+- name: Clone CF-For-K8S
+  shell: |
+    git -C "{{ base_path }}" clone https://github.com/cloudfoundry/cf-for-k8s.git
+  register: clone_cf_k8s
+  ignore_errors: yes
+  when: cf_k8s_dir.stat.exists == false
+- debug: msg={{ clone_cf_k8s }}
+  when: cf_k8s_dir.stat.exists == false
+
+
+- name: Generate Yaml used to deploy CF for K8S
+  shell: |
+    ./hack/generate-values.sh -d vcap.me > ./cf-install-values.yml
+  register: generate_cf_k8s_yaml
+  args:
+    chdir: "{{ base_path }}/cf-for-k8s/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ generate_cf_k8s_yaml }}
+
+
+# To the bottom of the ./cf-install-values.yml replacing with your information. You can copy/paste or use the following command.
+# docker login -u rokmc756@gmail.com -p XXXXX\!\@ https://index.docker.io/v1
+- name: Append the app_registry credentials to your DockerHub registry
+  lineinfile:
+    path: "{{ base_path }}/cf-for-k8s/cf-install-values.yml"
+    line: '{{item}}'
+    state: present
+  loop:
+    - "app_registry:"
+    - "  hostname: https://index.docker.io/v1/"
+    - "  repository_prefix: \"cf-for-k8s-test\""
+    - "  username: \"rokmc756@gmail.com\""
+    - "  password: \"xxxxxxxx!@\""
+  register: append_cred_app_registry
+- debug: msg={{ append_cred_app_registry }}
+#    - "  repository_prefix: \"cf-for-k8s-test\""
+
+
+- name: Add a metrics server because kind does not come with one
+  lineinfile:
+    path: "{{ base_path }}/cf-for-k8s/cf-install-values.yml"
+    line: "{{ item }}"
+    state: present
+  loop:
+    - "add_metrics_server_components: true"
+    - "enable_automount_service_account_token: true"
+    - "metrics_server_prefer_internal_kubelet_address: true"
+    - "use_first_party_jwt_tokens: true"
+    - "remove_resource_requirements: true"
+    - "\n"
+    - "load_balancer:"
+    - "  enable: true"
+  register: add_metrics_server
+- debug: msg={{ add_metrics_server }}
+
+
+#- name: Add a metrics server because kind does not come with one
+#  lineinfile:
+#    path: "{{ base_path }}/cf-for-k8s/cf-install-values.yml"
+#    line: "{{ item }}"
+#    state: present
+#  loop:
+#    - "enable_automount_service_account_token: true"
+#    - "use_first_party_jwt_tokens: true"
+#    - "\n"
+#    - "load_balancer:"
+#    - "  enable: true"
+#  register: add_metrics_server
+#- debug: msg={{ add_metrics_server }}
+#    - "remove_resource_requirements: true"
+#    - "metrics_server_prefer_internal_kubelet_address: true"
+
+
+#- name: Copy Metrics Server Config Yaml
+#  template:
+#    src: "{{ item }}.j2"
+#    dest: "{{ base_path }}/{{ item }}"
+#  register: copy_metrics_server_config_yaml
+#  with_items:
+#    - "metrics-server-values.yaml"
+#- debug: msg={{ copy_metrics_server_config_yaml }}
+
+
+#- name: Intall Metrics Server
+#  shell: |
+#    /usr/local/bin/helm install metrics-server metrics-server/metrics-server -n metrics-server --create-namespace -f metrics-server-values.yaml --wait
+#  register: install_metrics_server
+#  ignore_errors: yes
+#  args:
+#    chdir: "{{ base_path }}/"
+#- debug: msg={{ install_metrics_server }}
+
+
+#- name: Replace NodePort to ClusterIP Istiosystem
+#  lineinfile:
+#    path: "{{ base_path }}/cf-for-k8s/config/istio/ingressgateway-service-nodeport.yml"
+#    regexp: '^(.*)type: NodePort(.*)$'
+#    line: "  type: ClusterIP"
+#    backrefs: yes
+#  register: replace_istiosystem_type_line
+#- debug: msg={{ replace_istiosystem_type_line }}
+
+
+- name: Render the final Kubernetes template to raw Kubernetes configuration
+  shell: |
+    ytt -f config -f ./cf-install-values.yml > ./cf-for-k8s-rendered.yml
+  register: render_final_k8s_template
+  args:
+    chdir: "{{ base_path }}/cf-for-k8s"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ render_final_k8s_template }}
+
+
+- name: Replace Metrics Server Image Line
+  lineinfile:
+    path: "{{ base_path }}/cf-for-k8s/cf-for-k8s-rendered.yml"
+    regexp: '^(.*)image: oratos/metrics-server:v(.*)$'
+    line: "        image: cloudfoundry/oratos-metrics-server-cf-for-k8s:v0.3.6@sha256:a37da13de7b74c373e8698dee7836ce5fdbd102c3c1c8b9953a95e7f20138ab6"
+    backrefs: yes
+  register: replace_metrics_server_image_line
+- debug: msg={{ replace_metrics_server_image_line }}
+
+
+# Kapp list
+#- name: Deploy CF for K8S
+#  shell: |
+#    kapp deploy -a cf -f ./cf-for-k8s-rendered.yml -y
+#  register: deploy_cf_for_k8s
+#  args:
+#    chdir: "{{ base_path }}/cf-for-k8s"
+#  environment:
+#    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+#- debug: msg={{ deploy_cf_for_k8s }}
+
+
+- name: Validate if CF for K8S Containers are Running
+  shell: |
+    kubectl get pods -A | sed 1d | awk '{print $4}' | sort | uniq
+  register: check_cf_k8s_containers
+  until: check_cf_k8s_containers.stdout.find("CrashLoopBackOff") == -1
+  retries: 100
+  delay: 10
+- debug: msg={{ check_cf_k8s_containers }}
+  when: print_debug == true
+
+#
+# kubectl patch svc istio-ingressgateway --namespace istio-system --patch '{"spec": { "loadBalancerIP": "192.168.1.219" }}'
+

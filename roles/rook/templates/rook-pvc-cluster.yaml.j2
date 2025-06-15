@@ -1,0 +1,166 @@
+---
+###################################################################################################################
+# Define the settings for the rook-ceph cluster with common settings for a production cluster on top of bare metal.
+#
+# This example expects three nodes, each with two available disks. Please modify it according to your environment.
+# See the documentation for more details on storage settings available.
+#
+# For example, to create the cluster:
+#   kubectl create -f crds.yaml -f common.yaml -f operator.yaml
+#   kubectl create -f cluster-on-local-pvc.yaml
+###################################################################################################################
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: {{ _rook.namespace }}
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+{% for arr1 in all_nvme_info %}
+{% for arr2 in arr1 -%}
+{% for dinfo in arr2.devinfo %}
+{{ "---" }}
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: {{ dinfo[1] }}-{{ arr2.hostname }}
+spec:
+  storageClassName: {{ _rook.namespace }}
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  # PV for OSD must be a block volume - volumeMode: Block
+  # PV for mon must be a filesystem volume - volumeMode: Filesystem
+  volumeMode: {{ dinfo[0] }}
+  local:
+    path: /dev/{{ dinfo[1] }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ arr2.hostname }}
+{{ ""|safe }}
+{%- endfor -%}
+{%- endfor -%}
+{%- endfor -%}
+---
+apiVersion: ceph.rook.io/v1
+kind: CephCluster
+metadata:
+  name: rook
+  namespace: {{ _rook.namespace }}                  # namespace:cluster
+spec:
+  dataDirHostPath: /var/lib/rook
+  mon:
+    count: 3
+    allowMultiplePerNode: false
+    volumeClaimTemplate:
+      spec:
+        storageClassName: {{ _rook.namespace }}
+        resources:
+          requests:
+            storage: 10Gi
+  cephVersion:
+    image: quay.io/ceph/ceph:v18.2.4
+    allowUnsupported: false
+  skipUpgradeChecks: false
+  continueUpgradeAfterChecksEvenIfNotHealthy: false
+  mgr:
+    count: 2
+    allowMultiplePerNode: false
+    modules:
+      - name: rook
+        enabled: true
+  dashboard:
+    enabled: true
+    ssl: true
+  crashCollector:
+    disable: false
+  logCollector:
+    enabled: true
+    periodicity: daily                # one of: hourly, daily, weekly, monthly
+    maxLogSize: 500M                  # SUFFIX may be 'M' or 'G'. Must be at least 1M.
+  storage:
+    allowDeviceClassUpdate: false     # whether to allow changing the device class of an OSD after it is created
+    allowOsdCrushWeightUpdate: true   # whether to allow resizing the OSD crush weight after osd pvc is increased
+    storageClassDeviceSets:
+      - name: set1
+        count: 3
+        portable: true
+        tuneDeviceClass: true
+        tuneFastDeviceClass: false
+        encrypted: false
+        placement:
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - rook-ceph-osd
+        preparePlacement:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - rook-ceph-osd
+                      - key: app
+                        operator: In
+                        values:
+                          - rook-ceph-osd-prepare
+                  topologyKey: kubernetes.io/hostname
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: DoNotSchedule
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - rook-ceph-osd-prepare
+        resources:
+           limits:
+             memory: "2Gi"
+           requests:
+             cpu: "500m"
+             memory: "2Gi"
+        volumeClaimTemplates:
+          - metadata:
+              name: data
+            spec:
+              resources:
+                requests:
+                  storage: 10Gi
+              storageClassName: local-storage
+              volumeMode: Block
+              accessModes:
+                - ReadWriteOnce
+    onlyApplyOSDPlacement: false
+  resources:
+  #  prepareosd:
+  #    requests:
+  #      cpu: "200m"
+  #      memory: "200Mi"
+  priorityClassNames:
+    mon: system-node-critical
+    osd: system-node-critical
+    mgr: system-cluster-critical
+  disruptionManagement:
+    managePodBudgets: true
+    osdMaintenanceTimeout: 30
+    pgHealthCheckTimeout: 0
+
+# https://rook.io/docs/rook/latest-release/CRDs/Cluster/pvc-cluster/

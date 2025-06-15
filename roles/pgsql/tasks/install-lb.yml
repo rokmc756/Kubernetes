@@ -1,0 +1,55 @@
+---
+- name: Copy LoadBalancer Config Yaml for PostgreSQL and PGAdmin
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_lb_config_yaml
+  with_items:
+    - "pgadmin-loadbalancer.yaml"
+    - "repmgr-loadbalancer.yaml"
+    - "patroni-loadbalancer.yaml"
+    - "pgautofailover-loadbalancer.yaml"
+- debug: msg={{ copy_lb_config_yaml }}
+
+
+- name: Apply Load Balancer for PGAdmin
+  shell: |
+    kubectl patch svc pgadmin4 -n pgadmin -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ _pgadmin.lb_ip_addr }}"}}'
+  register: apply_pgadmin_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  when: pgadmin is defined and pgadmin == true
+- debug: msg={{ apply_pgadmin_lb }}
+  when: pgadmin is defined and pgadmin == true
+
+
+- name: Apply Load Balancer for RepMgr Cluster
+  shell: |
+    kubectl patch svc repmgr-postgresql-ha-{{ item.svc }} -n {{ pgsql.repmgr.namespace }} -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ item.lb_ip_addr }}"}}'
+  register: apply_repmgr_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "pgpool",       lb_ip_addr: "{{ pgsql.pgpool.lb_ip_addr }}" }
+    - { svc: "postgresql", lb_ip_addr: "{{ pgsql.repmgr.lb_ip_addr }}" }
+  when: repmgr is defined and repmgr == true
+- debug: msg={{ apply_repmgr_lb }}
+  when: repmgr is defined and repmgr == true
+
+
+- name: Apply Load Balancer for Patroni Cluster
+  shell: |
+    kubectl patch svc patroni-postgresql-{{ item.svc }} -n {{ item.ns }} -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ item.lb_ip_addr }}"}}'
+  register: apply_patroni_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "primary",  ns: "{{ pgsql.patroni.namespace }}",  lb_ip_addr: "{{ pgsql.patroni.primary.lb_ip_addr }}" }
+    - { svc: "read",     ns: "{{ pgsql.patroni.namespace }}",  lb_ip_addr: "{{ pgsql.patroni.read.lb_ip_addr }}" }
+  when: patroni is defined and patroni == true
+- debug: msg={{ apply_patroni_lb }}
+  when: patroni is defined and patroni == true
+

@@ -1,0 +1,196 @@
+---
+#- name: Restart Containerd to Apply Changes in config.toml
+#  systemd:
+#    name: containerd
+#    state: restarted
+#  register: restart_containerd
+#  until: restart_containerd
+#  retries: 20
+#  delay: 10
+
+
+- name: Load Kernel Modules for Kurbernetes
+  shell: |
+    modprobe {{ item }}
+  with_items:
+    - overlay
+    - br_netfilter
+  notify:
+    - Restart Containerd
+
+
+- name: Reset Kubernetes
+  shell: |
+    kubeadm reset -f
+  when: inventory_hostname in groups['master']
+
+
+- name: Restart Containerd to Apply Changes in config.toml
+  systemd:
+    name: containerd
+    state: restarted
+  register: restart_containerd
+  until: restart_containerd
+  retries: 20
+  delay: 10
+  when: inventory_hostname in groups['master']
+
+
+- name: Config Image Pull
+  shell: |
+    kubeadm config images pull --v=5
+  register: config_image_pull
+  # until: config_image_pull is succeeded
+  # retries: 10
+  # delay: 180
+  async: 600
+  poll: 0
+  when: inventory_hostname in groups['master']
+
+
+- name: Initialize Kubernetes Master and Create Cluster
+  shell: |
+    kubeadm init --apiserver-advertise-address={{ hostvars[groups['master'][0]][_netdev]['ipv4']['address'] }} \
+    --pod-network-cidr={{ k8s.cni.pod_network }} --cri-socket=unix:///run/containerd/containerd.sock \
+    --ignore-preflight-errors=all --v=5 --upload-certs
+  async: 360
+  poll: 5
+  register: kubeadm_init
+  when: inventory_hostname in groups['master']
+- debug: msg={{ kubeadm_init }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Set Fact for Token CA Certificate
+  set_fact:
+    k8s_token_ca_cert: "{{ (kubeadm_init.stdout_lines | select('search', 'discovery-token-ca-cert-hash') | list | string | split(' '))[1] }}"
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items: "{{ groups['all'] }}"
+  when: inventory_hostname in groups['master']
+- debug: msg={{ k8s_token_ca_cert }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Set Fact for Token
+  set_fact:
+    k8s_token: "{{ (kubeadm_init.stdout_lines | select('search', '--token') | list | string | split(' '))[4] }}"
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items: "{{ groups['all'] }}"
+  when: inventory_hostname in groups['master']
+- debug: msg={{ k8s_token }}
+  when: print_debug == true and inventory_hostname in groups['master']
+# k8s_cert_key: "{{ (kubeadm_init.stdout_lines | select('search', '--certificate-key') | list | string | split(' '))[1] }}"
+
+
+- name: Enable User as Admin Kube Environment
+  import_tasks: enable-default-kube-env.yml
+
+
+- name: Configure Kubectl Config
+  shell: |
+    kubectl taint nodes {{ hostvars[groups['master'][0]].ansible_hostname }} node-role.kubernetes.io/control-plane:NoSchedule-
+  register: kubectl_configured
+  until: kubectl_configured is succeeded
+  retries: 10
+  delay: 10
+  when: inventory_hostname in groups['master']
+- debug: msg={{ kubectl_configured }}
+  when: print_debug == true and inventory_hostname in groups['master']
+# kubectl taint nodes --all node-role.kubernetes.io/master-
+
+
+- name: Create POD for Master
+  lineinfile:
+    path: "{{ k8s.base_path }}/.bashrc"
+    line: "{{ item.content }}"
+    insertafter: EOF
+    create: true
+  register: master_pod_created
+  with_items:
+    - { content: " if [ -f /etc/bash_completion ] && ! shopt -oq posix; then " }
+    - { content: "   . /etc/bash_completion " }
+    - { content: " fi " }
+    - { content: " source <(kubectl completion bash) " }
+  when: inventory_hostname in groups['master']
+- debug: msg={{ master_pod_created }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Setup CNI Network Plugin
+  import_tasks: cni/setup-cni-plugin.yml
+  when: k8s.cni.install == true and inventory_hostname in groups['master']
+
+
+#- name: Add New Master Nodes
+#  import_tasks: add-new-masters.yml
+#  tags: install
+#  when: add_new_masters is defined and add_new_masters == true
+
+
+- name: Reset Kubernetes on Cluster Nodes
+  shell: |
+    kubeadm reset -f
+  register: kube_cluster_reset
+  when: inventory_hostname in groups['workers']
+- debug: msg={{ kube_cluster_reset }}
+  when: print_debug == true and inventory_hostname in groups['workers']
+
+
+- name: Join the Other Kubernetes Nodes to Cluster, the Command must be run on the Worker Nodes Only
+  shell: |
+    kubeadm join "{{ hostvars[groups['master'][0]][_netdev]['ipv4']['address'] }}:6443" \
+    --token "{{ k8s_token }}" --discovery-token-ca-cert-hash "{{ k8s_token_ca_cert }}"
+  register: store_it_copied
+  ignore_errors: yes
+  when: inventory_hostname in groups['workers']
+- debug: msg={{ store_it_copied }}
+  when: print_debug == true and inventory_hostname in groups['workers']
+
+
+- name: Disable and Stop Docker
+  systemd:
+    name: docker
+    state: stopped
+    enabled: no
+  register: docker_stopped
+  ignore_errors: true
+  until: docker_stopped is succeeded
+
+
+- name: Enable and Start Kubelet in Master Node
+  systemd:
+    name: kubelet
+    state: restarted
+    enabled: yes
+  register: master_kubelet_restarted
+  when: inventory_hostname in groups['master']
+- debug: msg={{ master_kubelet_restarted }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Check the Statuso of Nodes and Containers
+  import_tasks: ext/check-k8s-status.yml
+  when: inventory_hostname in groups['master']
+
+
+- name: Check the Status fo CNI Network Plugin
+  import_tasks: cni/check-cni-network-plugin.yml
+  when: k8s.cni.install == true and inventory_hostname in groups['master']
+
+
+- name: Apply BGP Network for Calico
+  import_tasks: cni/apply-bgp-network.yaml
+  when: k8s.cni.calico.install == true and k8s.cni.calico.ipip.enable == true and inventory_hostname in groups['master']
+
+
+- name: Apply Calico Network and Containerd
+  import_tasks: cni/apply-cni-mtu.yaml
+  when: k8s.cni.change_mtu == true
+
+
+- name: Enable Helm Repository
+  import_tasks: ext/enable-helm-repo.yml
+  when: inventory_hostname in groups['master']
+

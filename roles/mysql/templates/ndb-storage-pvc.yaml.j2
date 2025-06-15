@@ -1,0 +1,18 @@
+---
+apiVersion: mysql.oracle.com/v1
+kind: NdbCluster
+metadata:
+  name: mysql-ndb
+spec:
+  redundancyLevel: {{ mysql.ndb.redundancy_level }}
+  dataNode:
+    nodeCount: {{ mysql.ndb.ndbmtd.replica }}
+    pvcSpec:
+      storageClassName: mysql-ndb-storage
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+         storage: 10Gi
+  mysqlNode:
+    nodeCount: {{ mysql.ndb.mysqld.replica }}

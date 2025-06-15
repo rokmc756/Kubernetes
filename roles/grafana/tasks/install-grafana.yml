@@ -1,0 +1,102 @@
+---
+- name: Create Namespace for Persistent Volumes
+  shell: |
+    kubectl create namespace {{ _grafana.namespace }}
+  register: create_namespace
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+- name: Create Persistent Volumes
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_pvc
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ create_pvc }}
+  when: print_debug == true
+
+
+- name: Copy Grafana Helm Config
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_grafana_helm_config
+  with_items:
+    - "grafana-values.yaml"
+- debug: msg={{ copy_grafana_helm_config }}
+
+
+- name: Deploy Grafana
+  shell:
+    helm install grafana grafana/grafana -n grafana -f {{ base_path }}/grafana-values.yaml
+  register: deploy_grafana
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ deploy_grafana }}
+  when: print_debug == true
+
+
+- name: Validate if Grafana Containers are Running Normally
+  shell: |
+    kubectl get pods -n grafana | grep grafana- | awk '{print $3}' | grep Running | wc -l
+  register: check_grafana_container
+  until: check_grafana_container.stdout|int == _grafana.replica|int
+  retries: 60
+  delay: 10
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ check_grafana_container }}
+  when: print_debug == true
+
+
+# https://medium.com/@fhc.silv/running-grafana-in-the-local-environment-with-grafana-admin-d4872c793a9b
+# https://www.lisenet.com/2021/install-and-configure-grafana-on-kubernetes/
+# https://medium.com/swlh/free-ssl-certs-with-lets-encrypt-for-grafana-prometheus-operator-helm-charts-b3b629e84ba1
+# https://medium.com/@rudaym/grafana-with-https-in-kubernetes-2c48961ab4a3
+
+
+#- name: Generate Grafana TLS Cert Files
+#  import_tasks: gen-grafana-certs.yml
+
+#- name: Create a TLS Secret with the Contents of tls.key and tls.crt in the Grafana Namespace
+#  shell: |
+#    kubectl create secret tls grafana-cert --key {{ _ssl.dir }}/{{ _grafana.hostname }}.key --cert {{ _ssl.dir }}/{{ _grafana.hostname }}.crt -n {{ _grafana.namespace }}
+#  register: create_tls_secret
+#  args:
+#    chdir: "{{ base_path }}/"
+#  environment:
+#    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+#- debug: msg={{ create_tls_secret }}
+#  when: print_debug == true
+
+
+# PostgreSQL Monitor
+# https://apgapg.medium.com/analyzing-postgres-queries-performance-with-grafana-b8cd2f74c401
+

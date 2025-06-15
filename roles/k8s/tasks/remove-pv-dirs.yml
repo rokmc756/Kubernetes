@@ -1,0 +1,26 @@
+---
+- name: Remove Directories for Persistent Volumes
+  mount:
+    path: "/mnt/{{ item }}"
+    state: "unmounted"      # and absent
+  register: unmount_pv_dirs
+  ignore_errors: true
+  with_items: "{{ cont_pv_dirs }}"
+
+
+- name: Remove Directories for Persistent Volumes
+  file:
+    path: "/mnt/{{ item }}"
+    state: absent
+  register: remove_pv_dir
+  ignore_errors: true
+  with_items: "{{ cont_pv_dirs }}"
+
+
+- name: Remove Container's Common Directories
+  file:
+    path: "{{ item }}"
+    state: absent
+  register: remove_common_dirs
+  ignore_errors: true
+  with_items: "{{ cont_conf_files }}"

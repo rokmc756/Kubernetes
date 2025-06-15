@@ -1,0 +1,24 @@
+# https://oopflow.medium.com/setup-install-rancher-onto-existing-kubernetes-cluster-for-high-availability-7351f0284592
+
+- name: Remove Helm Repositories
+  shell: |
+    /usr/local/bin/helm repo remove {{ item }}
+  register: remove_helm_repos
+  ignore_errors: yes
+  with_items:
+    - bitnami
+    - jetstack
+- debug: msg={{ remove_helm_repos }}
+
+
+#- name: Delete Helm Install Script
+#  file:
+#    path: "{{ item }}"
+#    state: absent
+#  register: delete_helm_install_script
+#  ignore_errors: yes
+#  with_items:
+#    - "{{ base_path }}/get_helm.sh"
+#    - "/usr/local/bin/helm"
+#- debug: msg={{ delete_helm_install_script }}
+

@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafdrop
+  namespace: {{ _kafka.namespace }}
+  labels:
+    app: kafdrop
+spec:
+  replicas: {{ _kafdrop.replica }}
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+      - name: kafdrop
+        image: obsidiandynamics/kafdrop:latest
+        ports:
+        - containerPort: 9000
+        env:
+        - name: KAFKA_BROKERCONNECT
+          value: "kafka:9092"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafdrop
+  namespace: {{ _kafka.namespace }}
+  labels:
+    name: kafdrop
+spec:
+  ports:
+  - port: 9000
+    targetPort: 9000
+    name: kafdrop
+    protocol: TCP
+  selector:
+    app: kafka
+  type: ClusterIP
+  # LoadBalancer
+  # loadBalancerIP: "{{ _kafka.lb.ip_addr }}"
+

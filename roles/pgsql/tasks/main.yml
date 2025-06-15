@@ -1,0 +1,96 @@
+---
+- name: Check OS ( PostgreSQL }
+  fail: msg="Not a Red Hat based system!"
+  when: ansible_os_family != 'RedHat' or ansible_os_family != 'CentOS' or ansible_os_family != 'Rocky'
+
+
+- name: Set Facts for PostgreSQL
+  import_tasks: set-pgsql-facts.yml
+  tags:
+    - install
+    - uninstall
+
+
+- name: Enable Helm Repository
+  import_tasks: enable-helm-repo.yml
+  tags: install
+  when: _helm.enable_repo == true and inventory_hostname in groups['master']
+
+
+- name: Install Cert Manager
+  import_tasks: install-cert-manager.yml
+  tags: install
+  when: _cm.install == true and inventory_hostname in groups['master']
+
+
+- name: Deploy RepMgr Cluster
+  import_tasks: install-repmgr.yml
+  tags: install
+  when: ( repmgr is defined and repmgr == true ) and inventory_hostname in groups['master']
+
+
+- name: Deploy Patroni Cluster
+  import_tasks: install-patroni.yml
+  tags: install
+  when: ( patroni is defined and patroni == true ) and inventory_hostname in groups['master']
+
+
+- name: Deploy PGAdmin
+  import_tasks: install-pgadmin.yml
+  tags: install
+  when: ( pgadmin is defined and pgadmin == true ) and inventory_hostname in groups['master']
+
+
+- name: Install Load Balancer
+  import_tasks: install-lb.yml
+  tags: install
+  when: ( lb is defined and lb == true ) and inventory_hostname in groups['master']
+
+
+- name: Install NGINX Ingress
+  import_tasks: install-ingress.yml
+  tags: install
+  when: (( ingress is defined and ingress == true ) or ( powerdns_all is defined and powerdns_all )) and inventory_hostname in groups['master']
+
+
+- name: Unstall NGINX Ingress
+  import_tasks: uninstall-ingress.yml
+  tags: uninstall
+  when: (( ingress is defined and ingress == true ) or ( powerdns_all is defined and powerdns_all )) and inventory_hostname in groups['master']
+
+
+- name: Uninstall Load Balancer
+  import_tasks: uninstall-lb.yml
+  tags: uninstall
+  when: ( lb is defined and lb == true ) and inventory_hostname in groups['master']
+
+
+- name: Destroy PGAdmin
+  import_tasks: uninstall-pgadmin.yml
+  tags: uninstall
+  when: ( pgadmin is defined and pgadmin == true ) and inventory_hostname in groups['master']
+
+
+- name: Destroy Patroni Cluster
+  import_tasks: uninstall-patroni.yml
+  tags: uninstall
+  when: ( patroni is defined and patroni == true ) and inventory_hostname in groups['master']
+
+
+- name: Destroy RepMgr Cluster
+  import_tasks: uninstall-repmgr.yml
+  tags: uninstall
+  when: ( repmgr is defined and repmgr == true ) and inventory_hostname in groups['master']
+
+
+- name: Uninstall Cert Manager
+  import_tasks: uninstall-cert-manager.yml
+  tags: uninstall
+  when: _cm.install == true and inventory_hostname in groups['master']
+
+
+- name: Disable Helm Repository
+  import_tasks: disable-helm-repo.yml
+  tags: uninstall
+  when: _helm.enable_repo == false and inventory_hostname in groups['master']
+

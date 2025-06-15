@@ -1,0 +1,22 @@
+---
+- name: Copy Zabbix LoadBalancer Config Yaml
+  template:
+    src: zabbix-loadbalancer.yaml.j2
+    dest: "{{ base_path }}/zabbix-loadbalancer.yaml"
+  register: copy_zabbix_lb_config_yaml
+- debug: msg={{ copy_zabbix_lb_config_yaml }}
+
+
+- name: Apply Zabbix Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ _zabbix.namespace }} -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ item.lb_ip_addr }}"}}'
+  register: apply_zabbix_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "zabbix-postgresql", lb_ip_addr: "{{ _zabbix.postgresql.ip_addr }}" }
+    - { svc: "zabbix-zabbix-web", lb_ip_addr: "{{ _zabbix.web.ip_addr }}" }
+    - { svc: "zabbix-chrome", lb_ip_addr: "{{ _zabbix.chrome.ip_addr }}" }
+- debug: msg={{ apply_zabbix_lb }}
+

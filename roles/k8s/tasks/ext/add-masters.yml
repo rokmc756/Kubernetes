@@ -1,0 +1,104 @@
+---
+# https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/
+- name: Modify ControlPlaneEndpoint
+  shell: |
+    kubectl get configmap kubeadm-config -n kube-system -o yaml | \
+    sed -e "s/    networking:/    controlPlaneEndpoint: {{ hostvars[groups['master'][0]][_netdev]['ipv4']['address'] }}:6443\n    networking:/g" | \
+    kubectl apply -f - -n kube-system
+  register: modify_endpoint
+  when: inventory_hostname in groups['master']
+- debug: msg={{ modify_endpoint }}
+  when: print_debug == true and inventory_hostname in groups['master']
+  # sed -e "s/    networking:/    controlPlaneEndpoint: {{ k8s.net.vipaddr }}:6443\n    networking:/g" | \
+
+
+- name: Get Certificate Key
+  shell: |
+    kubeadm init phase upload-certs --upload-certs
+  register: get_cert_key
+  when: inventory_hostname in groups['master']
+- debug: msg={{ get_cert_key }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Set Fact for Token CA Certificate
+  set_fact:
+    k8s_cert_key: '{{ get_cert_key.stdout_lines[-1] }}'
+  register: set_cert_key
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items: "{{ groups['all'] }}"
+  when: inventory_hostname in groups['master']
+- debug: msg={{ set_cert_key }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Get Command to Join Cluster
+  shell: |
+    kubeadm token create --certificate-key "{{ k8s_cert_key }}" --print-join-command
+  register: get_join_cmd
+  when: inventory_hostname in groups['master']
+- debug: msg={{ get_join_cmd }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+#  k8s_join_cmd: "{{ get_join_cmd.stdout_lines[-1] | regex_replace(hostvars[groups['master'][0]][_netdev]['ipv4']['address'], k8s.net.vipaddr) }}"
+- name: Set Fact for Join Command
+  set_fact:
+    k8s_join_cmd: "{{ get_join_cmd.stdout_lines[-1] }}"
+  register: master_join_cmd
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items: "{{ groups['all'] }}"
+  when: inventory_hostname in groups['master']
+- debug: msg={{ master_join_cmd }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Reset Kubernetes on Cluster Nodes
+  command:  kubeadm reset -f
+  register: kube_cluster_reset
+  when: inventory_hostname in groups['slaves']
+- debug: msg={{ kube_cluster_reset }}
+  when: print_debug == true and inventory_hostname in groups['slaves']
+
+
+- name: Config Image Pull
+  command: kubeadm config images pull
+  when: inventory_hostname in groups['slaves']
+
+
+- name: Join New Master Nodes to Cluster, the Command must be run on the New Master Only
+  shell: |
+    {{ k8s_join_cmd }}
+  register: add_new_masters
+  ignore_errors: yes
+  when: inventory_hostname in groups['slaves']
+- debug: msg={{ add_new_masters }}
+  when: print_debug == true and inventory_hostname in groups['slaves']
+
+
+- name: Enable Your User to Start Using the Cluster
+  shell: |
+    rm -rf $HOME/.kube
+    mkdir -p $HOME/.kube
+    cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    chown $(id -u):$(id -g) $HOME/.kube/config
+  register: enable_user_kube_env
+  notify:
+    - Restart Kubelet
+    - Restart Containerd
+  when: inventory_hostname in groups['slaves']
+- debug: msg={{ enable_user_kube_env }}
+  when: print_debug == true and inventory_hostname in groups['slaves']
+
+
+- name: Validate If Kubernetes Workers are All Ready
+  shell: kubectl get nodes
+  register: check_k8s_workers_status
+  until: check_k8s_workers_status.stdout.find("NotReady") == -1
+  retries: 30
+  when: inventory_hostname in groups['master']
+- debug: msg={{ check_k8s_workers_status }}
+  when: print_debug == true and inventory_hostname in groups['master']
+

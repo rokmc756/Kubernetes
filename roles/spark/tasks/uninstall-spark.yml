@@ -1,0 +1,93 @@
+---
+- name: Uninstall Apache Spark
+  shell: |
+    /usr/local/bin/helm uninstall spark -n spark
+  register: uninstall_spark
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ uninstall_spark }}
+  when: print_debug == true
+
+
+- name: Validate if Apache Spark Containers are deleted
+  shell: |
+    kubectl get pods -n spark | grep spark- | awk '{print $3}' | uniq
+  register: delete_spark_container
+  ignore_errors: true
+  until: delete_spark_container.stdout.find("") != -1
+  retries: 100
+  delay: 10
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_spark_container }}
+  when: print_debug == true
+
+
+# helm uninstall ingress -n contour
+
+
+- name: Delete Persistent Volumes, Claim and Storage Class
+  shell: |
+    kubectl delete -f {{ item }}
+  register: delete_pvc
+  ignore_errors: true
+  with_items:
+    - "local-storage-pvc.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-class.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_pvc }}
+  when: print_debug == true
+
+
+- name: Delete Cluster Local PVC Config Yaml
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_cluster_local_pvc_config_yaml
+  ignore_errors: true
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ delete_cluster_local_pvc_config_yaml }}
+  when: print_debug == true
+
+
+- name: Delete Namespace for Persistent Volumes
+  shell: |
+    kubectl delete namespace {{ _spark.namespace }}
+  register: delete_namespace
+  ignore_errors: true
+  #with_items:
+  #  - spark
+  #  - contour
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_namespace }}
+  when: print_debug == true
+
+
+- name: Validate if Spark Controller Containers are Deleted
+  shell: |
+    kubectl get pods -n {{ _spark.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep -E 'Running|Terminating' | wc -l
+  register: check_spark_containers
+  until: check_spark_containers.stdout|int == 0
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "spark-master-", replica: "{{ _spark.master.replica }}" }
+    - { svc: "spark-worker-", replica: "{{ _spark.worker.replica }}" }
+- debug: msg={{ check_spark_containers }}
+  when: print_debug == true
+

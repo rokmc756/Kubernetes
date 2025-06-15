@@ -1,0 +1,41 @@
+---
+# https://www.devopsschool.com/blog/getting-started-with-cloud-foundry-for-kubernetes-using-cf-for-k8s-in-linuxubuntu/
+- name: Download Korifi CLI for Kind/YTT/Bosh/CF from GitHub
+  get_url:
+    url: "{{ item.url }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  register: download_korifi_cli
+  with_items:
+    - { dest: "/usr/local/bin/kind",  mode: "0755",  url: "{{ _kind.cli.download_url }}/v{{ _kind.cli.major_version }}.{{ _kind.cli.minor_version }}.{{ _kind.cli.patch_version }}/kind-linux-amd64"  }
+    - { dest: "/usr/local/bin/ytt",   mode: "0755",  url: "{{ _ytt.cli.download_url }}/v{{ _ytt.cli.major_version }}.{{ _ytt.cli.minor_version }}.{{ _ytt.cli.patch_version }}/ytt-linux-amd64"  }
+    - { dest: "/usr/local/bin/bosh",  mode: "0755",  url: "{{ _bosh.cli.download_url }}/v{{ _bosh.cli.major_version }}.{{ _bosh.cli.minor_version }}.{{ _bosh.cli.patch_version }}/bosh-cli-{{ _bosh.cli.major_version }}.{{ _bosh.cli.minor_version }}.{{ _bosh.cli.patch_version }}-linux-amd64"  }
+    - { dest: "/usr/local/bin/",      mode: "0755",  url: "{{ _cf.cli.download_url }}/v{{ _cf.cli.major_version }}.{{ _cf.cli.minor_version }}.{{ _cf.cli.patch_version }}/cf8-cli_{{ _cf.cli.major_version }}.{{ _cf.cli.minor_version }}.{{ _cf.cli.patch_version }}_linux_x86-64.tgz"  }
+- debug: msg={{ download_korifi_cli }}
+
+
+- name: Install Kapp
+  shell: |
+    wget -O- https://carvel.dev/install.sh | bash
+  register: install_kapp
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ install_kapp }}
+
+
+- name: Execute Bosh and CF CLI
+  shell: |
+    {{ item }}
+  register: execute_cli
+  with_items:
+    - "bosh -v"
+    - "cf -v"
+    - "kapp --version"
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ execute_cli }}
+

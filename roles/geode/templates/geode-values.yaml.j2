@@ -1,0 +1,36 @@
+service:
+  type: ClusterIP
+  port: 7070
+
+config:
+  num_locators: {{ _geode.locators.replica }}
+  num_servers: {{ _geode.servers.replica }}
+
+memory:
+  max_locators: {{ _geode.locators.memory }}
+  max_servers: {{ _geode.servers.memory }}
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - geode.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+

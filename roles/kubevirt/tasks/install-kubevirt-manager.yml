@@ -1,0 +1,135 @@
+- name: Check if the KubeVirt Manager Source Code is already downloaded
+  stat: path={{ base_path }}/kubevirt-manager
+  register: kubevirt_manager_dir_existed
+- debug: msg={{ kubevirt_manager_dir_existed }}
+
+
+- name: Clone KubeVirt Manager
+  shell: |
+    git -C {{ base_path }} clone https://github.com/kubevirt-manager/kubevirt-manager
+  register: create_kubevirt_operator
+  when: kubevirt_manager_dir_existed.stat.exists != True
+  ignore_errors: true
+- debug: msg={{ create_kubevirt_operator }}
+  when: print_debug == true
+  # git -C "{{ base_path }}" clone --single-branch --branch release-{{ rook.major_version }}.{{ rook.minor_version }} https://github.com/rook/rook.git
+
+
+- name: Change Server Name
+  lineinfile:
+    dest: "{{ base_path }}/kubevirt-manager/conf/{{ item.dest }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: "{{ item.state }}"
+  register: change_server_name
+  with_items:
+    - { regexp: "^    server_name:*", line: "    server_name: {{ _kubevirt.hostname }};", dest: "default.conf", state: present }
+- debug: msg={{ change_server_name }}
+  when: print_debug == true
+
+
+- name: Create the Namespace
+  shell: |
+    kubectl apply -f kubernetes/ns.yaml
+  register: create_namespace
+  args:
+    chdir: "{{ base_path }}/kubevirt-manager"
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+
+
+- name: Create the Custom Resource Definition
+  shell: |
+    kubectl apply -f kubernetes/crd.yaml
+  register: create_custom_resource_definition
+  args:
+    chdir: "{{ base_path }}/kubevirt-manager"
+- debug: msg={{ create_custom_resource_definition }}
+  when: print_debug == true
+
+
+- name: Create the Service Account and RBAC
+  shell: |
+    kubectl apply -f kubernetes/rbac.yaml
+  register: create_service_account_rbac
+  args:
+    chdir: "{{ base_path }}/kubevirt-manager"
+- debug: msg={{ create_service_account_rbac }}
+  when: print_debug == true
+
+
+- name: Create the FrontEnd Deployment
+  shell: |
+    kubectl apply -f kubernetes/deployment.yaml
+  register: create_frontend_deployment
+  args:
+    chdir: "{{ base_path }}/kubevirt-manager"
+- debug: msg={{ create_frontend_deployment }}
+  when: print_debug == true
+
+
+- name: Create the Priority Classes
+  shell: |
+    kubectl apply -f kubernetes/pc.yaml
+  register: create_priority_classes
+  args:
+    chdir: "{{ base_path }}/kubevirt-manager"
+- debug: msg={{ create_priority_classes }}
+  when: print_debug == true
+
+
+- name: Create the FrontEnd Service
+  shell: |
+    kubectl apply -f kubernetes/service.yaml
+  register: create_frontend_service
+  args:
+    chdir: "{{ base_path }}/kubevirt-manager"
+- debug: msg={{ create_frontend_service }}
+  when: print_debug == true
+
+
+# PROMETHEUS INTEGRATION
+# , you need to edit kubernetes/prometheus-config.yaml and adjust your endpoint on line 21. After adjusting the endpoint, apply the configmap:
+# kubectl apply -f kubernetes/prometheus-config.yaml
+
+
+- name: Create Auth for KubeVirt Manager
+  shell: |
+    kubectl apply -f kubernetes/auth-{{ item }}.yaml
+  register: create_kubevirt_manager_auth
+  args:
+    chdir: "{{ base_path }}/kubevirt-manager"
+  with_items:
+    - config
+    - secret
+- debug: msg={{ create_kubevirt_manager_auth }}
+  when: print_debug == true
+
+
+- name: Restart KubeVirt Manager Deployment
+  shell: |
+    kubectl rollout restart deployment.apps/kubevirt-manager -n kubevirt-manager
+  register: restart_kubevirt_manager_deployment
+  args:
+    chdir: "/root/kubevirt-manager"
+  with_items:
+    - config
+    - secret
+- debug: msg={{ restart_kubevirt_manager_deployment }}
+  when: print_debug == true
+
+
+# echo "changeme" > htpasswd-file
+# cat htpasswd-file | base64 -w0
+#
+# After adjusting secret contents, apply the configmap and the secret:
+# kubectl apply -f kubernetes/auth-config.yaml
+# kubectl apply -f kubernetes/auth-secret.yaml
+#
+# echo -n 'admin:' > /root/.htpasswd
+# openssl passwd -apr1 changeme >> /root/.htpasswd
+# cat /root/.htpasswd
+# admin:$apr1$PK5v6nYU$tznI3lUvVVH0HMDMgVotw1
+#
+# kubectl rollout restart deployment.apps/kubevirt-manager -n kubevirt-manager
+

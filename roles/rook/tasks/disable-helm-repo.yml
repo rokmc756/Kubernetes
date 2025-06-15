@@ -1,0 +1,23 @@
+---
+- name: Remove Helm Repositories
+  shell: |
+    /usr/local/bin/helm repo remove {{ item }}
+  register: remove_helm_repos
+  ignore_errors: yes
+  with_items:
+    - jetstack
+    - rook-release
+    - ingress-nginx
+- debug: msg={{ remove_helm_repos }}
+
+
+#- name: Delete Helm Install Script
+#  file:
+#    path: "{{ item }}"
+#    state: absent
+#  register: delete_helm
+#  with_items:
+#    - "{{ base_path }}/get_helm.sh"
+#    - "/usr/local/bin/helm"
+#- debug: msg={{ delete_helm }}
+

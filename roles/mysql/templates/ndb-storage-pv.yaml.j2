@@ -1,0 +1,27 @@
+{% for h in groups["workers"] %}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-ndb-pv-{{ hostvars[h]['ansible_hostname'] }}
+  namespace: mysql-ndb
+spec:
+  capacity:
+    storage: 15Gi
+  # volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: mysql-ndb-storage
+  local:
+    path: {{ mysql.ndb.storage_path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ hostvars[h]['ansible_hostname'] }}
+{% endfor %}
+

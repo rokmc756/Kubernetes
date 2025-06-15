@@ -1,0 +1,86 @@
+---
+#- name: Umount Kubelet and Containred Directories Hold by Docker and Containerd
+#  shell: |
+#    umount $(df -HT | grep '{{ item }}' | awk '{print $7}')
+#  register: umount_kubelet_dir
+#  ignore_errors: true
+#  with_items:
+#    - "/var/lib/kubelet/pods"
+#    - "/etc/kubernetes/manifests/kube-apiserver.yaml"
+#    - "/etc/kubernetes/manifests/kube-controller-manager.yaml"
+#    - "/etc/kubernetes/manifests/kube-scheduler.yaml"
+#    - "/etc/kubernetes/manifests/etcd.yaml"
+#    - "/var/lib/etcd"
+#    - "/run/containerd"
+#- debug: msg={{ umount_kubelet_dir }}
+#  when: print_debug == true
+
+
+- name: Delete Kube Directories for Common Linux Distributions
+  file:
+    path: "{{ item }}"
+    state: absent
+  register: remove_kube_dirs
+  ignore_errors: true
+  with_items: "{{ common_conf_files }}"
+- debug: msg={{ remove_kube_dirs }}
+  when: print_debug == true
+
+
+- name: Delete Kube Directories for Ubuntu or Debian
+  file:
+    path: "{{ item }}"
+    state: absent
+  register: remove_ubt_kube_dirs
+  ignore_errors: true
+  with_items: "{{ ubt_conf_files }}"
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+- debug: msg={{ remove_ubt_kube_dirs }}
+  when: print_debug == true and ( ansible_distribution == "Ubuntu" or ansible_distribution == "Debian" )
+
+
+- name: Delete Kube Directories for RedHat or CentOS or Rocky
+  file:
+    path: "{{ item }}"
+    state: absent
+  register: remove_rh_kube_dirs
+  ignore_errors: true
+  with_items: "{{ rh_conf_files }}"
+  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky"
+- debug: msg={{ remove_rh_kube_dirs }}
+  when: print_debug and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" )
+
+
+- name: Delete Kube Directories for OpenSUSE
+  file:
+    path: "{{ item }}"
+    state: absent
+  register: remove_suse_kube_dirs
+  ignore_errors: true
+  with_items: "{{ suse_conf_files }}"
+  when: ansible_distribution == "openSUSE Leap"
+- debug: msg={{ remove_suse_kube_dirs }}
+  when: print_debug and ansible_distribution == "openSUSE Leap"
+
+
+- name: Refresh Metadata from Package Repository
+  shell: |
+    {{ update_repo_cache }}
+  register: refresh_repo_metadata
+  ignore_errors: true
+- debug: msg={{ refresh_repo_metadata }}
+  when: print_debug == true
+
+
+- name: Remove Kubectl Commnd in .bashrc
+  lineinfile:
+    path: "{{ item.file }}"
+    regexp: "{{ item.regexp }}"
+    state: "{{ item.state }}"
+  ignore_errors: true
+  with_items:
+    - { file: "/root/.bashrc", regexp: "kubectl completion bash", state: absent }
+  register: remove_kubectl_command_bashrc
+- debug: msg={{ remove_kubectl_command_bashrc }}
+  when: print_debug
+

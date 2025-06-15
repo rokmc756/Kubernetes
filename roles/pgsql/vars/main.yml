@@ -1,0 +1,157 @@
+---
+base_path: /root
+
+pgsql:
+  pgpool:
+    lb_ip_addr: "192.168.1.242"
+  repmgr:
+    namespace: repmgr
+    replica: 3
+    storage_path: "/mnt/repmgr-storage"
+    storage_class: "repmgr-storage"
+    lb_ip_addr: "192.168.1.243"
+    service:
+      metadata:
+        name: repmgr
+        namespace: repmgr
+  patroni:
+    namespace: patroni
+    replica: 3
+    storage_class: "patroni-storage"
+    storage_path: "/mnt/patroni-storage"
+    lb_ip_addr: "192.168.1.245"
+    primary:
+      lb_ip_addr: "192.168.1.245"
+    read:
+      lb_ip_addr: "192.168.1.246"
+    secondary:
+      lb_ip_addr: "192.168.1.246"
+    service:
+      metadata:
+        name: patroni
+        namespace: patroni
+  pgautofailover:
+    namespace: pgautofailover
+    replica: 3
+    storage_class: "pgautofailover-storage"
+    storage_path: "/mnt/pgautofailover-storage"
+    lb_ip_addr: "192.168.1.245"
+    primary:
+      lb_ip_addr: "192.168.1.245"
+    secondary:
+      lb_ip_addr: "192.168.1.246"
+    service:
+      metadata:
+        name: pgautofailover
+        namespace: pgautofailover
+  install: true
+  major_version: 10
+  minor_version: 1
+  patch_version: 0
+  build_version:
+  clone_git: false
+  nvme: false
+  storage_path: "/mnt/pgsql-storage"
+  replica: 3
+  db:
+    name: "jtestdb-pgsql"
+    user: "jomoon"
+    password: "changeme"
+  root_password: "changeme"
+  mariabackup_password: "changeme"
+  k8s:
+    major_version: 1
+    minor_version: 30
+    patch_version: 0
+    build_version:
+  hostname: "pgsql.jtest.pivotal.io"
+  service:
+    metadata:
+      name: pgsql-loadbalancer
+      namespace: pgsql
+  ingress:
+    metadata:
+      name: pgsql-ingress
+      namespace: nginx-ingress
+    hostname: "pgsql.jtest.pivotal.io"
+  kernel_parameters:
+    - "net.ipv4.neigh.default.gc_thresh1 = 0"       # For ARP Cache
+  manager:
+    install: false
+  lb:
+    install: true
+
+
+_pgadmin:
+  install: true
+  namespace: pgadmin
+  lb_ip_addr: "192.168.1.219"
+  storage_path: "/mnt/pgadmin-storage"
+  storage_class: "pgadmin-storage"
+  replica: 1
+  db:
+    name: "testdb-pgadmin"
+    user: "jomoon"
+    password: "changeme"
+  root_password: "changeme"
+  mariabackup_password: "changeme"
+  hostname: "pgadmin.jtest.pivotal.io"
+  service:
+    metadata:
+      name: pgadmin4
+      namespace: pgadmin
+  ingress:
+    metadata:
+      name: pgadmin-ingress
+      namespace: nginx-ingress
+    hostname: "pgadmin.jtest.pivotal.io"
+  kernel_parameters:
+    - "net.ipv4.neigh.default.gc_thresh1 = 0"       # For ARP Cache
+  lb:
+    install: true
+
+
+_helm:
+  enable_repo: true
+  major_version: 3
+  minor_version:
+  patch_version:
+  build_version:
+
+
+_cm:
+  install: false
+  major_version: 1
+  minor_version: 7
+  patch_version: 1
+
+
+_nginx:
+  ingress:
+    install: true
+    name: nginx-ingress
+    class_name: pgadmin-ingress-class
+    namespace: "nginx-ingress"
+    major_version:
+    minor_version:
+    patch_version:
+    hostname: pgadmin
+    domain: jtest.pivotal.io
+    ip_addr: "192.168.1.219"
+    replica: 1
+  k8s_ingress:
+    major_version: 3
+    minor_version: 0
+    patch_version: 2
+
+
+_ssl:
+  dir: "{{ base_path }}/rook-certs"
+  days: 3660
+  country: "KR"
+  state: "Seoul"
+  location: "Guro"
+  organization: "Pivotal"
+  common_name: "jest.pivotal.io"
+  email: "rokmc756@gmail.com"
+

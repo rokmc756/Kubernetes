@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-cf-db-postgresql-0
+  namespace: cf-db
+spec:
+  storageClassName: cf-k8s-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cf-blobstore-minio
+  namespace: cf-blobstore
+spec:
+  storageClassName: cf-k8s-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

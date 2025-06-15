@@ -1,0 +1,40 @@
+---
+- name: Drain Slave Master Nodes
+  shell: |
+    kubectl drain {{ item }} --ignore-daemonsets --delete-local-data
+  register: drain_slave_master
+  with_items: "{{ groups['new_workers'] }}"
+  ignore_errors: true
+  when: inventory_hostname in groups['master']
+- debug: msg={{ drain_slave_master }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Delete Slave Master Nodes
+  shell: |
+    kubectl delete node {{ item }}
+  register: delete_slave_master
+  with_items: "{{ groups['new_workers'] }}"
+  ignore_errors: true
+  when: inventory_hostname in groups['master']
+- debug: msg={{ delete_slave_master }}
+  when: print_debug == true and inventory_hostname in groups['master']
+
+
+- name: Reset Kubernetes
+  shell: 
+    kubeadm reset --cri-socket=/var/run/crio/crio.sock -f
+    kubeadm reset -f
+  ignore_errors: true
+  when: inventory_hostname in groups['new_workers']
+
+
+- name: Confirm that the Kubectl Command is Activated
+  command: kubectl get nodes
+  register: kubectl_get_nodes
+  ignore_errors: true
+  when: inventory_hostname in groups['master']
+- debug: msg={{ kubectl_get_nodes }}
+  ignore_errors: true
+  when: print_debug == true and inventory_hostname in groups['master']
+

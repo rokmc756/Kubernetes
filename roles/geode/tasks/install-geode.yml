@@ -1,0 +1,73 @@
+---
+- name: Create Namespace for Persistent Volumes
+  shell: |
+    kubectl create namespace {{ _geode.namespace }}
+  register: create_namespace
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_pvc
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ create_pvc }}
+  when: print_debug == true
+
+
+- name: Copy Geode Helm Config
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_geode_helm_config
+  with_items:
+    - "geode-values.yaml"
+- debug: msg={{ copy_geode_helm_config }}
+
+
+- name: Deploy Geode
+  shell: |
+    /usr/local/bin/helm install geode google-geode/geode -n {{ _geode.namespace }} -f {{ base_path }}/geode-values.yaml
+  register: deploy_geode
+- debug: msg={{ deploy_geode }}
+  when: print_debug == true
+
+
+- name: Validate if Geode Containers are Running
+  shell: |
+    kubectl get pods -n {{ _geode.namespace }} | grep -E '{{ item.svc }}' | awk '{print $3}' | grep Running | wc -l
+  register: check_geode_containers
+  until: check_geode_containers.stdout|int == item.replica|int
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "^geode-[0-9]", replica: "{{ _geode.locators.replica }}" }
+    - { svc: "^geode-server-[0-9]",  replica: "{{ _geode.servers.replica }}" }
+- debug: msg={{ check_geode_containers }}
+  when: print_debug == true
+
+
+# To monitor Geode cluster run these commands
+# $ export POD_NAME=$(kubectl get pods --namespace geode -l \"app=geode,release=geode\" -o jsonpath=\"{.items[0].metadata.name}\")"
+# $ kubectl port-forward $POD_NAME 7070:7070",
+#
+# Then visit http://127.0.0.1:7070/pulse (login/password: admin/admin)
+

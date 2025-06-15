@@ -1,0 +1,56 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: katib-mysql-pvc
+  namespace: {{ _kubeflow.namespace }}
+spec:
+  storageClassName: kubeflow-storage
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 7Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+  namespace: {{ _kubeflow.namespace }}
+spec:
+  storageClassName: {{ _kubeflow.storage_class }}
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 7Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  namespace: {{ _kubeflow.namespace }}
+spec:
+  storageClassName: {{ _kubeflow.storage_class }}
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 7Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: authservice-pvc
+  namespace: istio-system
+spec:
+  storageClassName: authservice-storage
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 7Gi

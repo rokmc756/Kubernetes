@@ -1,0 +1,102 @@
+---
+#expose:
+#  type: loadBalancer
+#  loadBalancer:
+#    IP: {{ _harbor.lb.ip_addr }}
+#  tls:
+#    enabled: true
+#    certSource: secret
+#    auto:
+#      commonName: ""
+#    secret:
+#      secretName: "harbor-cert"
+#      notarySecretName: "harbor-cert"
+#  ingress:
+#    hosts:
+#      core: {{ _harbor.hostname }}
+#      notary: {{ _harbor.hostname }}
+#
+#
+#externalURL: https://{{ _harbor.hostname }}
+
+
+expose:
+  type: ingress
+  tls:
+    enabled: true
+    certSource: secret
+    secret:
+      secretName: harbor-tls
+  ingress:
+    hosts:
+      core: harbor.jtest.pivotal.io
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+
+
+externalURL: "https://{{ _nginx.ingress.hostname }}.{{ _nginx.ingress.domain }}:31445"
+
+
+existingSecretAdminPasswordKey: "changeme"
+harborAdminPassword: "changeme"
+
+
+persistence:
+  enabled: true
+  resourcePolicy: "keep"
+  persistentVolumeClaim:
+    registry:
+      storageClass: "{{ _harbor.storage_class }}"
+      existingClaim: "harbor-registry"
+      accessMode: ReadWriteOnce
+      size: 10Gi
+    jobservice:
+      jobLog:
+        storageClass: "{{ _harbor.storage_class }}"
+        existingClaim: "harbor-jobservice"
+        accessMode: ReadWriteOnce
+        size: 10Gi
+    redis:
+      storageClass: "{{ _harbor.storage_class }}"
+      existingClaim: "data-harbor-redis-0"
+      accessMode: ReadWriteOnce
+      size: 10Gi
+    trivy:
+      storageClass: "{{ _harbor.storage_class }}"
+      existingClaim: "data-harbor-trivy-0"
+      accessMode: ReadWriteMany
+      size: 10Gi
+    database:
+      storageClass: "{{ _harbor.storage_class }}"
+      existingClaim: "database-data-harbor-database-0"
+      accessMode: ReadWriteOnce
+      size: 10Gi
+  imageChartStorage:
+    disableredirect: false
+    type: filesystem
+    filesystem:
+      rootdirectory: "{{ _harbor.storage_path }}"
+
+
+registry:
+  replicas: "{{ _harbor.registry.replica }}"
+portal:
+  replicas: "{{ _harbor.portal.replica }}"
+core:
+  replicas: "{{ _harbor.core.replica }}"
+jobservice:
+  replicas: "{{ _harbor.jobservice.replica }}"
+trivy:
+  enabled: true
+  replicas: "{{ _harbor.trivy.replica }}"
+notary:
+  enabled: true
+cache:
+  enabled: true
+  expireHours: 24
+database:
+  type: internal
+redis:
+  type: internal
+

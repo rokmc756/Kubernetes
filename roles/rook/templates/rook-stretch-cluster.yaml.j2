@@ -1,0 +1,39 @@
+---
+apiVersion: ceph.rook.io/v1
+kind: CephCluster
+metadata:
+  name: rook
+  namespace: {{ _rook.namespace }}
+spec:
+  dataDirHostPath: /var/lib/rook
+  mon:
+    count: 5
+    allowMultiplePerNode: false
+    stretchCluster:
+      failureDomainLabel: topology.kubernetes.io/zone
+      subFailureDomain: host
+      zones:
+      - name: a
+        arbiter: true
+      - name: b
+      - name: c
+  cephVersion:
+    image: quay.io/ceph/ceph:v18.2.4
+    allowUnsupported: true
+  storage:
+    useAllNodes: true
+    useAllDevices: true
+    deviceFilter: ""
+  placement:
+    osd:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: topology.kubernetes.io/zone
+              operator: In
+              values:
+              - b
+              - c
+
+# https://rook.io/docs/rook/latest-release/CRDs/Cluster/stretch-cluster/

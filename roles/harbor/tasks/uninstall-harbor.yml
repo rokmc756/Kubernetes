@@ -1,0 +1,98 @@
+---
+- name: Uninstall Harbor
+  shell: |
+    helm uninstall harbor -n {{ _harbor.namespace }}
+  register: uninstall_harbor
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ uninstall_harbor }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Validate if Harbor Containers are deleted
+  shell: |
+    kubectl get pods -n {{ _harbor.namespace }} | grep harbor- | awk '{print $3}' | uniq
+  register: delete_harbor_container
+  ignore_errors: true
+  until: delete_harbor_container.stdout.find("") != -1
+  retries: 100
+  delay: 10
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_harbor_container }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+# helm uninstall ingress -n contour
+
+
+- name: Delete Persistent Volumes, Claim and Storage Class
+  shell: |
+    kubectl delete -f {{ item }}
+  register: delete_pvc
+  ignore_errors: true
+  with_items:
+    - "local-storage-pvc.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-class.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_pvc }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete Cluster Local PVC Config Yaml
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_cluster_local_pvc_config_yaml
+  ignore_errors: true
+  with_items:
+    - "local-storage-pvc.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-class.yaml"
+- debug: msg={{ delete_cluster_local_pvc_config_yaml }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete Namespace for Persistent Volumes
+  shell: |
+    kubectl delete namespace {{ _harbor.namespace }}
+  register: delete_namespace
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_namespace }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Validate if Harbor Containers are Running
+  shell: |
+    kubectl -n {{ _harbor.namespace }} get pod | grep harbor | awk '{print $3}' | cut -d : -f 1
+  register: check_harbor_container
+  ignore_errors: true
+  until: check_harbor_container.stdout.find("") != -1
+  retries: 100
+  delay: 10
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ check_harbor_container }}
+  ignore_errors: true
+  when: print_debug == true
+

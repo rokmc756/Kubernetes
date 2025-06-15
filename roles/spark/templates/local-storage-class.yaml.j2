@@ -1,0 +1,20 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ _spark.storage_class }}
+  namespace: {{ _spark.namespace }}
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+#---
+#apiVersion: storage.k8s.io/v1
+#kind: StorageClass
+#metadata:
+#  name: authservice-storage
+#  namespace: istio-system
+#provisioner: kubernetes.io/no-provisioner
+#volumeBindingMode: WaitForFirstConsumer
+#
+
+

@@ -1,0 +1,99 @@
+# https://psawesome.tistory.com/123
+- name: Create Namespace for Persistent Volumes
+  shell: |
+    kubectl create namespace {{ _spark.namespace }}
+  register: create_namespace
+  #with_items:
+  #  - contour
+  #  - spark
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_pvc
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ create_pvc }}
+  when: print_debug == true
+
+
+- name: Copy Apache Spark Loadbalancer Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_spark_lb_config_yaml
+  with_items:
+    - "spark-values.yaml"
+- debug: msg={{ copy_spark_lb_config_yaml }}
+
+
+# helm install ingress bitnami/contour --create-namespace -n contour --wait
+- name: Deploy Apache Spark
+  shell: |
+    helm install spark bitnami/spark -n spark -f {{ base_path }}/spark-values.yaml
+  register: deploy_spark
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ deploy_spark }}
+  when: print_debug == true
+
+
+- name: Validate if Apache Spark Containers are Running
+  shell: |
+    kubectl -n spark get pods
+  register: check_spark_container
+  until: check_spark_container.stdout.find("ContainerCreating") == -1
+  retries: 100
+  delay: 10
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ check_spark_container }}
+  when: print_debug == true
+
+
+- name: Validate if Spark Controller Containers are Running
+  shell: |
+    kubectl get pods -n {{ _spark.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep Running | wc -l
+  register: check_spark_containers
+  until: check_spark_containers.stdout|int == item.replica|int
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "spark-master-", replica: "{{ _spark.master.replica }}" }
+    - { svc: "spark-worker-", replica: "{{ _spark.worker.replica }}" }
+- debug: msg={{ check_spark_containers }}
+  when: print_debug == true
+
+
+# https://medium.com/@kayvan.sol2/spark-on-kubernetes-d566158186c6
+# https://velog.io/@newnew_daddy/spark06
+# https://ssup2.github.io/blog-software/docs/theory-analysis/spark-on-kubernetes/

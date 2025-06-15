@@ -1,0 +1,75 @@
+---
+replicaCount: 1
+
+serviceAccount:
+  create: true
+
+
+existingConfigMap: ""
+
+
+yamlApplicationConfig:
+  kafka:
+    clusters:
+      - name: jclue01
+        bootstrapServers: {% for n in range(0, _kafka.controller.replica|int) %}
+kafka-controller-{{ n }}.kafka-controller-headless.kafka.svc.cluster.local:9092{% if not loop.last %},{% endif %}
+{% endfor %}
+
+  # spring:
+  #   security:
+  #     oauth2:
+  # auth:
+  #   type: disabled
+  # management:
+  #   health:
+  #     ldap:
+  #       enabled: false
+
+
+networkPolicy:
+  enabled: false
+  egressRules:
+    customRules: []
+  ingressRules:
+    customRules: []
+
+
+probes:
+  useHttpsScheme: false
+
+
+service:
+  port: 80
+  type: ClusterIP
+
+
+ingress:
+  enabled: false
+  annotations: {}
+  ingressClassName: ""
+  path: "/"
+  pathType: "Prefix"
+  host: ""
+  tls:
+    enabled: false
+    secretName: ""
+  precedingPaths: []
+  succeedingPaths: []
+
+
+resources:
+   limits:
+     cpu: 1000m
+     memory: 1024Mi
+   requests:
+     cpu: 200m
+     memory: 256Mi
+
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+

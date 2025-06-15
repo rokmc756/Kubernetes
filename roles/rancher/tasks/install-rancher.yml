@@ -1,0 +1,41 @@
+---
+- name: Create Namespace
+  shell: |
+    kubectl create namespace cattle-system
+  register: create_rancher_namespace
+- debug: msg={{ create_rancher_namespace }}
+
+
+- name: Install Rancher
+  shell: |
+    /usr/local/bin/helm install rancher rancher-stable/rancher --namespace cattle-system \
+    --set hostname={{ _rancher.hostname }} --set bootstrapPassword={{ _rancher.admin_password }}
+  register: install_rancher
+- debug: msg={{ install_rancher }}
+
+
+- name: Check the Status of the Deployment
+  shell: |
+    kubectl -n cattle-system rollout status deploy/rancher
+  register: check_deployment_status
+- debug: msg={{ check_deployment_status }}
+
+
+# pod/rancher-7d8f64bfc6-8t9s4   0/1     ContainerCreating   0          53s
+# pod/rancher-7d8f64bfc6-fsw7w   0/1     ContainerCreating   0          53s
+# pod/rancher-7d8f64bfc6-nnmzw   0/1     ContainerCreating   0          53s
+
+
+- name: Check if Rancher is Deployed Successfully
+  shell: kubectl get all -n cattle-system
+  register: check_rancher_deployment
+  until: check_rancher_deployment.stdout.find("NotReady") == -1
+  retries: 20
+- debug: msg={{ check_rancher_deployment }}
+
+
+# kubectl get all -A | grep -E "service/rancher-loadbalancer|service/nginx-ingress-controller"
+
+# [ Check Rancher and NGINX Ingress ]
+# kubectl get events --all-namespaces  --sort-by='.metadata.creationTimestamp'
+

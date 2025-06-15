@@ -1,0 +1,89 @@
+---
+- name: Uninstall Redmine
+  shell: |
+    /usr/local/bin/helm uninstall redmine -n {{ _redmine.namespace }}
+  register: uninstall_redmine
+  ignore_errors: true
+- debug: msg={{ uninstall_redmine }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Validate if Redmine Containers are Deleted
+  shell: |
+    kubectl get pods -n {{ _redmine.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep -E "Running|Terminating" | wc -l
+  register: check_redmine_containers
+  until: check_redmine_containers.stdout|int == 0
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "redmine-", replica: "{{ _redmine.replica }}" }
+- debug: msg={{ check_redmine_containers }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  ignore_errors: true
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete Persistent Volumes, Claim and Storage Class
+  shell: |
+    kubectl delete -f {{ item }}
+  register: delete_pvc
+  ignore_errors: true
+  with_items:
+    - "local-storage-pvc.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-class.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ delete_pvc }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete Cluster Local PVC Config Yaml
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_cluster_local_pvc_config_yaml
+  ignore_errors: true
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ delete_cluster_local_pvc_config_yaml }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete Namespace for Persistent Volumes
+  shell: |
+    kubectl delete namespace {{ _redmine.namespace }}
+  register: delete_namespace
+  ignore_errors: true
+- debug: msg={{ delete_namespace }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete Redmine Helm Config
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_redmine_helm_config
+  with_items:
+    - "redmine-values.yaml"
+- debug: msg={{ delete_redmine_helm_config }}
+

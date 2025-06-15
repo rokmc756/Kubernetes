@@ -1,0 +1,75 @@
+---
+- name: Uninstall Mongo Express
+  shell: |
+    /usr/local/bin/helm uninstall mongo-express -n {{ _mongo_express.namespace }}
+  register: uninstall_mongo_express
+  ignore_errors: true
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ uninstall_mongo_express }}
+  when: print_debug == true
+
+
+- name: Validate if Mongo Express Container is Running
+  shell: |
+    kubectl get pods -n {{ _mongo_express.namespace }} | grep mongo-express | awk '{print $3}' | wc -l
+  register: check_mongo_express_container
+  ignore_errors: true
+  until: check_mongo_express_container.stdout|int == 0
+  retries: 100
+  delay: 10
+- debug: msg={{ check_mongo_express_container }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  ignore_errors: true
+  with_items:
+    - "express-storage-class.yaml"
+    - "express-storage-pv.yaml"
+    - "express-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl delete -f {{ item }}
+  register: delete_pvc
+  ignore_errors: true
+  with_items:
+    - "express-storage-pvc.yaml"
+    - "express-storage-pv.yaml"
+    - "express-storage-class.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ delete_pvc }}
+  when: print_debug == true
+
+
+- name: Delete Mongo Express Config Yaml and Directory
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_mongo_express_config
+  ignore_errors: true
+  with_items:
+    - "mongo-express-values.yaml"
+    - "express-storage-pvc.yaml"
+    - "express-storage-pv.yaml"
+    - "express-storage-class.yaml"
+- debug: msg={{ delete_mongo_express_config }}
+  when: print_debug == true
+
+
+- name: Delete Namespace for Mongo Express
+  shell: |
+    kubectl delete namespace {{ _mongo_express.namespace }}
+  register: delete_mongo_express_namespace
+  ignore_errors: true
+- debug: msg={{ delete_mongo_express_namespace }}
+  when: print_debug == true
+

@@ -1,0 +1,130 @@
+# https://medium.com/@ithesadson/how-to-deploy-a-harbor-with-helm-k8s-minikube-25f89af83610
+# https://www.viktorious.nl/2023/01/12/deploy-harbor-registry-with-signed-certificates-using-cert-manager-lets-encrypt-and-aws-route-53/
+
+- name: Create Namespace for Persistent Volumes
+  shell: |
+    kubectl create namespace {{ _harbor.namespace }}
+  register: create_namespace
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config }}
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_pvc
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ create_pvc }}
+  when: print_debug == true
+
+
+- name: Copy Harbor Helm Config
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_harbor_helm_config
+  with_items:
+    - "harbor-values.yaml"
+- debug: msg={{ copy_harbor_helm_config }}
+
+
+- name: Generate Harbor TLS Cert Files
+  import_tasks: gen-harbor-certs.yml
+
+
+- name: Create a TLS Secret with the Contents of tls.key and tls.crt in the Harbor Namespace
+  shell: |
+    kubectl create secret tls harbor-tls --key {{ _ssl.dir }}/{{ _harbor.hostname }}.key \
+    --cert {{ _ssl.dir }}/{{ _harbor.hostname }}.crt -n {{ _harbor.namespace }}
+  register: create_tls_secret
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ create_tls_secret }}
+  when: print_debug == true
+
+
+- name: Deploy Harbor
+  shell: |
+    helm install harbor -f {{ base_path }}/harbor-values.yaml harbor/harbor -n {{ _harbor.namespace }}
+  register: deploy_harbor
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ deploy_harbor }}
+  when: print_debug == true
+
+
+- name: Validate if Harbor Containers are Running Normally
+  shell: |
+    kubectl -n harbor get pods
+  register: check_harbor_container
+  until: check_harbor_container.stdout.find("ContainerCreating") == -1
+  retries: 100
+  delay: 10
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ check_harbor_container }}
+  when: print_debug == true
+
+
+- name: Validate if Harbor Containers are Running Normally
+  shell: |
+    kubectl -n harbor get pods
+  register: check_harbor_container
+  until: check_harbor_container.stdout.find("CrashLoopBackOff") == -1
+  retries: 100
+  delay: 10
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ check_harbor_container }}
+  when: print_debug == true
+
+
+- name: Validate if Harbor Containers are Running
+  shell: |
+    kubectl get pods -n {{ _harbor.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep Running | wc -l
+  register: check_harbor_containers
+  until: check_harbor_containers.stdout|int == item.replica|int
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "harbor-core-",       replica: "{{ _harbor.core.replica }}" }
+    - { svc: "harbor-database-",   replica: "{{ _harbor.database.replica }}" }
+    - { svc: "harbor-jobservice-", replica: "{{ _harbor.jobservice.replica }}" }
+    - { svc: "harbor-portal-",     replica: "{{ _harbor.portal.replica }}" }
+    - { svc: "harbor-redis-",      replica: "{{ _harbor.redis.replica }}" }
+    - { svc: "harbor-registry-",   replica: "{{ _harbor.registry.replica }}" }
+    - { svc: "harbor-trivy-",      replica: "{{ _harbor.trivy.replica }}" }
+- debug: msg={{ check_harbor_containers }}
+  when: print_debug == true
+

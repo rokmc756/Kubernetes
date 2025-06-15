@@ -1,0 +1,11 @@
+---
+- name: Delete ArgoCD Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ _argocd.namespace }} -p '{"spec": {"type": "ClusterIP"}}'
+  register: delete_argocd_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "argocd-server",     lb_ip_addr: "{{ _argocd.lb.ip_addr }}" }
+- debug: msg={{ delete_argocd_lb }}

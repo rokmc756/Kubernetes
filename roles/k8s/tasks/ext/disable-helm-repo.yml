@@ -1,0 +1,24 @@
+---
+- name: Remove Helm Repositories
+  shell: |
+    /usr/local/bin/helm repo remove {{ item.name }}
+  register: remove_helm_repos
+  with_items:
+    - { name: 'jetstack',         link: 'https://charts.jetstack.io' }
+    - { name: 'community-charts', link: 'https://community-charts.github.io/helm-charts' }
+    - { name: 'metallb',          link: 'https://metallb.github.io/metallb' }
+    - { name: 'ingress-nginx',    link: 'https://kubernetes.github.io/ingress-nginx' }
+- debug: msg={{ remove_helm_repos }}
+
+
+- name: Delete Helm Install Script
+  file:
+    path: "{{ item }}"
+    state: absent
+  register: delete_helm_install_script
+  ignore_errors: yes
+  with_items:
+    - "{{ base_path }}/get_helm.sh"
+    - "/usr/local/bin/helm"
+- debug: msg={{ delete_helm_install_script }}
+

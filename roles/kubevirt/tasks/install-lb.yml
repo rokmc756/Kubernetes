@@ -1,0 +1,22 @@
+---
+- name: Copy KubeVirt LoadBalancer Config Yaml
+  template:
+    src: kubevirt-loadbalancer.yaml.j2
+    dest: "{{ base_path }}/kubevirt-loadbalancer.yaml"
+  register: copy_kubevirt_lb_config_yaml
+- debug: msg={{ copy_kubevirt_lb_config_yaml }}
+# kubectl apply -f kubevirt-loadbalancer.yaml
+
+
+- name: Apply KubeVirt Manager Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ _kubevirt_manager.namespace }} -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ item.lb_ip_addr }}"}}'
+  register: apply_mongodb_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "kubevirt-manager", lb_ip_addr: "{{ _kubevirt_manager.lb.ip_addr }}" }
+- debug: msg={{ apply_mongodb_lb }}
+  when: print_debug == true
+

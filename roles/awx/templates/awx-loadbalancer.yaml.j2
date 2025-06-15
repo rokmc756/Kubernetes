@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ _awx.service.metadata.name }}
+  namespace: {{ _awx.service.metadata.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-protocol: "true"
+spec:
+  selector:
+    app: awx-web
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443
+  type: LoadBalancer

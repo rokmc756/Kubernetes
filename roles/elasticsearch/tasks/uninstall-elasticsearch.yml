@@ -1,0 +1,105 @@
+---
+- name: Uninstall ElasticSearch
+  shell: |
+    /usr/local/bin/helm uninstall {{ item.name }} -n {{ _elasticsearch.namespace }}
+  register: uninstall_elasticsearch
+  ignore_errors: true
+  with_items:
+    - { name: "logstash", repo: "logstash", val: "logstash-values.yaml" }
+    - { name: "kibana", repo: "kibana", val: "kibana-values.yaml" }
+    - { name: "filebeat",  repo: "filebeat", val: "filebeat-values.yaml" }
+    - { name: "elasticsearch", repo: "elasticsearch", val: "elasticsearch-values.yaml" }
+- debug: msg={{ uninstall_elasticsearch }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Validate if ElasticSearch Containers are Running
+  shell: |
+    kubectl get pods -n {{ _elasticsearch.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep -E "Running|Terminating" | wc -l
+  register: check_elasticsearch_containers
+  ignore_errors: true
+  until: check_elasticsearch_containers.stdout|int == 0
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "logstash-", repo: "logstash", replica: "{{ _elasticsearch.logstash.replica }}" }
+    - { svc: "kibana-kibana-", repo: "kibana", replica: "{{ _elasticsearch.kibana.replica }}" }
+    - { svc: "filebeat-filebeat-",  repo: "filebeat", replica: "{{ _elasticsearch.filebeat.replica }}" }
+    - { svc: "elasticsearch-master-", repo: "elasticsearch", replica: "{{ _elasticsearch.elasticsearch.replica }}" }
+- debug: msg={{ check_elasticsearch_containers }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  ignore_errors: true
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete Persistent Volumes, Claim and Storage Class
+  shell: |
+    kubectl delete -f {{ item }}
+  register: delete_pvc
+  ignore_errors: true
+  with_items:
+    - "local-storage-pvc.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-class.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ delete_pvc }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete Cluster Local PVC Config Yaml
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_cluster_local_pvc_config_yaml
+  ignore_errors: true
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ delete_cluster_local_pvc_config_yaml }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete Namespace for Persistent Volumes
+  shell: |
+    kubectl delete namespace {{ _elasticsearch.namespace }}
+  register: delete_namespace
+  ignore_errors: true
+- debug: msg={{ delete_namespace }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete ElasticSearch Helm Config
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_elasticsearch_helm_config
+  ignore_errors: true
+  with_items:
+    - "kibana-values.yaml"
+    - "logstash-values.yaml"
+    - "filebeat-values.yaml"
+    - "elasticsearch-values.yaml"
+- debug: msg={{ delete_elasticsearch_helm_config }}
+  ignore_errors: true
+  when: print_debug == true
+

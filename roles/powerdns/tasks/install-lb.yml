@@ -1,0 +1,23 @@
+---
+- name: Copy PowerDNS LoadBalancer Config Yaml
+  template:
+    src: powerdns-loadbalancer.yaml.j2
+    dest: "{{ base_path }}/powerdns-loadbalancer.yaml"
+  register: copy_powerdns_lb_config_yaml
+- debug: msg={{ copy_powerdns_lb_config_yaml }}
+
+
+# kubectl apply -f powerdns-loadbalancer.yaml
+- name: Apply PowerDNS Load Balancer
+  shell: |
+    kubectl patch svc powerdns-{{ item.proto }} -n {{ _powerdns.namespace }} -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ item.ip_addr }}"}}'
+  register: apply_powerdns_lb
+  ignore_errors: yes
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { proto: "udp", ip_addr: "{{ _powerdns.dns.udp.ip_addr }}" }
+    - { proto: "tcp", ip_addr: "{{ _powerdns.dns.tcp.ip_addr }}" }
+    - { proto: "postgresql", ip_addr: "{{ _powerdns.db.postgresql.ip_addr }}" }
+- debug: msg={{ apply_powerdns_lb }}
+

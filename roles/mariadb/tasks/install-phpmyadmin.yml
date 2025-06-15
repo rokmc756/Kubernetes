@@ -1,0 +1,41 @@
+---
+- name: Create Namespace for Persistent Volumes
+  shell: |
+    kubectl create namespace {{ item }}
+  register: create_namespace
+  with_items:
+    - phpmyadmin
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+
+
+- name: Deploy phpMyaAmin
+  shell:
+    helm install phpmyadmin bitnami/phpmyadmin -n phpmyadmin
+  register: deploy_phpmyadmin
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ deploy_phpmyadmin }}
+  when: print_debug == true
+
+
+- name: Validate if phpMyAdmin Containers are Running Normally
+  shell: |
+    kubectl -n phpmyadmin get pods | sed 1d | awk '{print $3}' | grep Running | wc -l
+  register: check_phpmyadmin_container
+  until: check_phpmyadmin_container.stdout|int == 1
+  retries: 60
+  delay: 10
+  args:
+    chdir: "{{ base_path }}/"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ check_phpmyadmin_container }}
+  when: print_debug == true
+

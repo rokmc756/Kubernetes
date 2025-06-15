@@ -1,0 +1,38 @@
+---
+- name: Reset Kubernetes
+  command: kubeadm reset -f
+  register: reset_kube
+  ignore_errors: yes
+- debug: msg={{ reset_kube }}
+  when: print_debug == true
+
+
+- name: Disable and Stop Docker
+  systemd:
+    name: docker
+    state: stopped
+    enabled: no
+  register: docker_stopped
+  ignore_errors: true
+  until: docker_stopped is succeeded
+
+
+- name: Disable and Stop Containerd
+  systemd:
+    name: containerd
+    state: stopped
+    enabled: no
+  register: containerd_stopped
+  ignore_errors: true
+  until: containerd_stopped is succeeded
+
+
+- name: Disable and Stop Kubelet
+  systemd:
+    name: kubelet
+    state: stopped
+    enabled: no
+  register: kubelet_stopped
+  ignore_errors: true
+  until: kubelet_stopped is succeeded
+

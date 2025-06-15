@@ -1,0 +1,116 @@
+---
+- name: Create Namespace for Persistent Volumes
+  shell: |
+    kubectl create namespace {{ _elasticsearch.namespace }}
+  register: create_namespace
+  #with_items:
+  #  - elasticsearch
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+
+
+- name: Copy Cluster Local PVC Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_cluster_local_pvc_config_yaml
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+  shell: |
+    kubectl create -f {{ item }}
+  register: create_pvc
+  with_items:
+    - "local-storage-class.yaml"
+    - "local-storage-pv.yaml"
+    - "local-storage-pvc.yaml"
+  args:
+    chdir: "{{ base_path }}/"
+- debug: msg={{ create_pvc }}
+  when: print_debug == true
+
+
+- name: Copy ElasticSearch Helm Config
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_elasticsearch_helm_config
+  with_items:
+    - "elasticsearch-values.yaml"
+    - "filebeat-values.yaml"
+    - "logstash-values.yaml"
+    - "kibana-values.yaml"
+- debug: msg={{ copy_elasticsearch_helm_config }}
+
+
+#- name: Generate ElasticSearch TLS Cert Files
+#  import_tasks: gen-elasticsearch-certs.yml
+#
+#
+#- name: Create a TLS Secret with the Contents of tls.key and tls.crt in the ElasticSearch Namespace
+#  shell: |
+#    kubectl create secret tls elasticsearch-cert --key {{ _ssl.dir }}/{{ _elasticsearch.hostname }}.key \
+#    --cert {{ _ssl.dir }}/{{ _elasticsearch.hostname }}.crt -n {{ _elasticsearch.namespace }}
+#  register: create_tls_secret
+#  args:
+#    chdir: "{{ base_path }}/"
+#  environment:
+#    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+#- debug: msg={{ create_tls_secret }}
+#  when: print_debug == true
+
+
+- name: Deploy ElasticSearch
+  shell: |
+    /usr/local/bin/helm install {{ item.name }} elastic/{{ item.repo }} -n {{ _elasticsearch.namespace }} -f {{ base_path }}/{{ item.val }}
+  register: deploy_elasticsearch
+  with_items:
+    - { name: "elasticsearch", repo: "elasticsearch", val: "elasticsearch-values.yaml" }
+    - { name: "filebeat",  repo: "filebeat", val: "filebeat-values.yaml" }
+- debug: msg={{ deploy_elasticsearch }}
+  when: print_debug == true
+
+
+- name: Validate if ElasticSearch Containers are Running
+  shell: |
+    kubectl get pods -n {{ _elasticsearch.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep Running | wc -l
+  register: check_elasticsearch_containers
+  until: check_elasticsearch_containers.stdout|int == item.replica|int
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "elasticsearch-master-", repo: "elasticsearch", replica: "{{ _elasticsearch.elasticsearch.replica }}" }
+- debug: msg={{ check_elasticsearch_containers }}
+  when: print_debug == true
+  # - { svc: "filebeat-filebeat-",  repo: "filebeat", replica: "{{ _elasticsearch.filebeat.replica }}" }
+
+
+- name: Deploy Kibana
+  shell: |
+    /usr/local/bin/helm install {{ item.name }} elastic/{{ item.repo }} -n {{ _elasticsearch.namespace }} -f {{ base_path }}/{{ item.val }}
+  register: deploy_kibana
+  with_items:
+    - { name: "kibana", repo: "kibana", val: "kibana-values.yaml" }
+    - { name: "logstash", repo: "logstash", val: "logstash-values.yaml" }
+- debug: msg={{ deploy_kibana }}
+  when: print_debug == true
+
+
+- name: Validate if Kibana Containers are Running
+  shell: |
+    kubectl get pods -n {{ _elasticsearch.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep Running | wc -l
+  register: check_kibana_containers
+  until: check_kibana_containers.stdout|int == item.replica|int
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "kibana-kibana-", repo: "kibana", replica: "{{ _elasticsearch.kibana.replica }}" }
+    - { svc: "logstash-", repo: "logstash", replica: "{{ _elasticsearch.logstash.replica }}" }
+- debug: msg={{ check_kibana_containers }}
+  when: print_debug == true
+

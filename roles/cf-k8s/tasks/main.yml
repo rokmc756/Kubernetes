@@ -1,0 +1,48 @@
+---
+# for now fail if it's not a Red Hat based system
+- name: Check OS ( Kubernetes )
+  fail: msg="Not a Red Hat or SuSE based system!"
+  when: ansible_os_family != 'RedHat' or  ansible_os_family != 'CentOS' or  ansible_os_family != 'Rocky' or ansible_os_family != 'Suse' or ansible_os_family != 'Ubuntu' or ansible_os_family != 'Debian'
+
+
+- name: Set facts for network and packages informations
+  import_tasks: set-facts.yml
+  tags:
+    - install
+    - uninstall
+
+- name: Enable Helm Repository
+  import_tasks: enable-helm-repo.yml
+  tags: install
+  when: helm.enable_repo == true and inventory_hostname in groups['master']
+
+
+- name: Install CF for K8S CLI
+  import_tasks: install-cli.yml
+  tags: install
+  when: cf_k8s.install_cli == true and inventory_hostname in groups['master']
+
+
+- name: Deploy CF for K8S
+  import_tasks: deploy-cf.yml
+  tags: install
+  when: cf_k8s.deploy == true and inventory_hostname in groups['master']
+
+
+- name: Destroy CF for K8S
+  import_tasks: destroy-cf.yml
+  tags: uninstall
+  when: cf_k8s.deploy == true and inventory_hostname in groups['master']
+
+
+- name: Uninstall CF for K8S CLI
+  import_tasks: uninstall-cli.yml
+  tags: uninstall
+  when: cf_k8s.install_cli == true and inventory_hostname in groups['master']
+
+
+- name: Disable Helm Repository
+  import_tasks: disable-helm-repo.yml
+  tags: uninstall
+  when: helm.enable_repo == true and inventory_hostname in groups['master']
+

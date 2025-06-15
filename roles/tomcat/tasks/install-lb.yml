@@ -1,0 +1,29 @@
+---
+- name: Copy Minio Loadbalancer Config Yaml
+  template:
+    src: tomcat-loadbalancer.yaml.j2
+    dest: "{{ base_path }}/tomcat-loadbalancer.yaml"
+  register: copy_tomcat_lb_config_yaml
+- debug: msg={{ copy_tomcat_lb_config_yaml }}
+
+
+- name: Apply MinIO Load Balancer
+  shell: |
+    kubectl patch svc {{ item.svc }} -n {{ _tomcat.namespace }} -p '{"spec": {"type": "LoadBalancer", "loadBalancerIP": "{{ item.lb_ip_addr }}"}}'
+  register: apply_tomcat_lb
+  args:
+    chdir: "{{ base_path }}"
+  with_items:
+    - { svc: "tomcat", lb_ip_addr: "{{ _tomcat.lb.ip_addr }}" }
+- debug: msg={{ apply_tomcat_lb }}
+  when: print_debug == true
+
+
+- name: Print IP Addresses for LoadBalancer
+  shell: |
+    kubectl get all -A | grep LoadBalancer
+  register: print_lb_ipaddr
+  args:
+    chdir: "{{ base_path }}"
+- debug: msg={{ print_lb_ipaddr }}
+

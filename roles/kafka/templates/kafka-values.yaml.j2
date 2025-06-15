@@ -1,0 +1,46 @@
+controller:
+  replicaCount: "{{ _kafka.controller.replica }}"
+  automountServiceAccountToken: true
+
+
+broker:
+  replicaCount: "{{ _kafka.broker.replica }}"
+  automountServiceAccountToken: true
+  zookeeperMigrationMode: false
+  persistence.enabled: true
+
+
+serviceAccount:
+  create: true
+
+
+externalAccess:
+  enabled: true
+  controller:
+    service:
+      type: ClusterIP
+      domain: kafka.jtest.pivotal.io
+      ports:
+        external: 9094
+  broker:
+    service:
+      type: ClusterIP
+      domain: kafka.jtest.pivotal.io
+      ports:
+        external: 9094
+
+
+listeners:
+  client:
+    protocol: PLAINTEXT
+  controller:
+    protocol: PLAINTEXT
+
+
+rbac:
+  create: true
+
+
+topic:
+  autoCreate: true
+
