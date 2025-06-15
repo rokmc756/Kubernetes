@@ -1,8 +1,8 @@
-## What is KubeFarmer
-The KubeFarmer is Ansible Playbook to deploy Native Kubernetes Cluster and deploy bunch of K8S Softwares and Applications on it such as Rancher, Rook Ceph, Postgres, Kubeflow, Kafka and so an.
+## What is this Repository
+The Kubernetees is Ansible Playbook to deploy Native Kubernetes Cluster and deploy bunch of K8S Softwares and Applications on it such as Rancher, Rook Ceph, Postgres, Kubeflow, Kafka and so an.
 
 ## Kubernetes Architecutre
-![alt text](https://github.com/rokmc756/kubefarmer/blob/main/roles/k8s/files/kubernetes_architecture.webp)
+![alt text](https://github.com/rokmc756/kubernetes/blob/main/roles/k8s/files/kubernetes_architecture.webp)
 
 ## Supported Platform and OS
 Virtual Machines\
@@ -15,7 +15,7 @@ Ubuntu 22.x
 MacOS or Windows Linux Subsysetm or Many kind of Linux Distributions should have ansible as ansible host.\
 Supported OS for ansible target host should be prepared with package repository configured such as yum, dnf and apt as well as zypper\
 
-## Prepare ansible host to run KubeFarmer
+## Prepare ansible host to run this Ansible Playbook
 * MacOS
 ```
 $ xcode-select --install
@@ -282,7 +282,7 @@ $ make reinit
 ## References
 * https://k21academy.com/docker-kubernetes/multi-node-kubernetes-cluster-on-suse-linux/
 * https://tuanpembual.wordpress.com/2020/10/15/run-opensuse-kubic-like-k8s-podman-cri-o-on-alibaba-cloud/
-* https://github.com/rokmc756/kubefarmer/blob/main/roles/k8s/files/kubernetes-cluster-architecture.svg
+* https://github.com/rokmc756/kubernetes/blob/main/roles/k8s/files/kubernetes-cluster-architecture.svg
 * https://medium.com/@muppedaanvesh/deploying-nginx-on-kubernetes-a-quick-guide-04d533414967
 * https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/
 * https://aws.plainenglish.io/how-to-deploy-a-nginx-server-with-kubernetes-9228f17e399c
