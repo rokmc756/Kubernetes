@@ -163,7 +163,7 @@ $ make deepseek r=install s=all
 ```bash
 $ make deepseek r=uninstall s=all
 ```
-[![YouTube](https://youtu.be/Ze9baCb9QQs?si=jfRT1uSyX7DcJI6F)](https://www.youtube.com/watch?v=jSCiGs7OCFg)
+[![YouTube](https://github.com/rokmc756/Kubernetes/blob/main/roles/deepseek/images/02-config-open-webui.jpg))](https://www.youtube.com/watch?v=jSCiGs7OCFg)
 
 
 ### 9) Reinitialize Kubernetes Cluster
