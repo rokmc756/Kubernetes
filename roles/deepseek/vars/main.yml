@@ -37,7 +37,7 @@ _deepseek:
   clone_git: true
   nvme: true
   namespace: deepseek
-  storage_path: "/mnt/deepseek-storage"
+  storage_path: "/opt/deepseek-storage"
   storage_class: "deepseek-storage"
   hostname: "deepseek.jtest.pivotal.io"
   service:
@@ -59,9 +59,11 @@ _deepseek:
     - { name: "open-webui-ollama", lb_ip_addr: "192.168.1.223" }
     - { name: "open-webui-pipelines", lb_ip_addr: "192.168.1.224" }
     - { name: "open-webui-postgres", lb_ip_addr: "192.168.1.225" }
+  replica:
+    open_web_ui: 3
+    redis_cluster: 3
 
-deepseek_total_pvs: 5
-# deepseek_total_pvs: "{{ ( _deepseek.sharded_shard|int * _deepseek.shardsvr|int ) + _deepseek.configsvr|int }}"
+deepseek_total_pvs: "{{ _deepseek.replica.open_web_ui|int + _deepseek.replica.redis_cluster|int + 3 }}"
 
 
 # NAME                          TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)           AGE

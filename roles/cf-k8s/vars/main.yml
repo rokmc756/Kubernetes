@@ -30,7 +30,7 @@ director:
 cf_k8s:
   install_cli: true
   deploy: true
-  storage_path: "/mnt/cf-k8s-storage"
+  storage_path: "/opt/cf-k8s-storage"
 
 
 kind:

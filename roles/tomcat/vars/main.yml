@@ -22,7 +22,7 @@ _tomcat:
   clone_git: true
   nvme: true
   namespace: tomcat
-  storage_path: "/mnt/tomcat-storage"
+  storage_path: "/opt/tomcat-storage"
   storage_class: "tomcat-storage"
   k8s:
     major_version: 1

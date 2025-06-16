@@ -1,6 +1,7 @@
 ---
 base_path: /root
 
+
 _dashboard:
   install: true
   major_version: 2

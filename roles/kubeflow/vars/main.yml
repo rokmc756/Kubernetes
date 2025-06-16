@@ -25,7 +25,7 @@ _kubeflow:
   nfs_server: "192.168.1.90"
   nfs_root_dir: /nfs-root
   lb_ip_addr: "192.168.1.223"
-  storage_path: "/mnt/kubeflow-storage"
+  storage_path: "/opt/kubeflow-storage"
   storage_class: "kubeflow-storage"
   k8s:
     major_version: 1

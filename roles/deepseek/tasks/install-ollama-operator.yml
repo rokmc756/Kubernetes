@@ -13,6 +13,7 @@
     kubectl wait -n {{ _ollama.namespace }} --for=jsonpath='{.status.readyReplicas}'=1 deployment/ollama-operator-controller-manager
   register: wait_for_ready
   until: wait_for_ready is succeeded
+  retries: 20
   args:
     chdir: "{{ base_path }}"
 - debug: msg={{ wait_for_ready }}

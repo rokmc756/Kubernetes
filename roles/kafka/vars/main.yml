@@ -21,7 +21,7 @@ _kafka:
   enable_discovery_daemon: false
   clone_git: false
   namespace: kafka
-  storage_path: "/mnt/kafka-storage"
+  storage_path: "/opt/kafka-storage"
   storage_class: "kafka-storage"
   k8s:
     major_version: 1

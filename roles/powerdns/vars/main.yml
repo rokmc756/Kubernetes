@@ -10,7 +10,7 @@ _powerdns:
   clone_git: true
   nvme: true
   namespace: "powerdns"
-  storage_path: "/mnt/powerdns-storage"
+  storage_path: "/opt/powerdns-storage"
   storage_class: "powerdns-storage"
   k8s:
     major_version: 1

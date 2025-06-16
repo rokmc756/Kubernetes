@@ -9,7 +9,7 @@ _argocd:
   build_version:
   namespace: argocd
   storage_class: "argocd-storage"
-  storage_path: "/mnt/argocd-storage"
+  storage_path: "/opt/argocd-storage"
   replica: 3
   db:
     name: "argocd"

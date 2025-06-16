@@ -43,7 +43,7 @@
   shell: |
     kubectl get pods -n {{ _deepseek.namespace }} |  grep open-webui | awk '{print $3}' | grep Running | wc -l
   register: check_open_webui_container
-  until: check_open_webui_container.stdout|int == 4
+  until: check_open_webui_container.stdout|int == deepseek_total_pvs|int
   retries: 100
   delay: 10
 - debug: msg={{ check_open_webui_container }}

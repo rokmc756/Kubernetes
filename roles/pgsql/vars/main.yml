@@ -7,7 +7,7 @@ pgsql:
   repmgr:
     namespace: repmgr
     replica: 3
-    storage_path: "/mnt/repmgr-storage"
+    storage_path: "/opt/repmgr-storage"
     storage_class: "repmgr-storage"
     lb_ip_addr: "192.168.1.243"
     service:
@@ -18,7 +18,7 @@ pgsql:
     namespace: patroni
     replica: 3
     storage_class: "patroni-storage"
-    storage_path: "/mnt/patroni-storage"
+    storage_path: "/opt/patroni-storage"
     lb_ip_addr: "192.168.1.245"
     primary:
       lb_ip_addr: "192.168.1.245"
@@ -34,7 +34,7 @@ pgsql:
     namespace: pgautofailover
     replica: 3
     storage_class: "pgautofailover-storage"
-    storage_path: "/mnt/pgautofailover-storage"
+    storage_path: "/opt/pgautofailover-storage"
     lb_ip_addr: "192.168.1.245"
     primary:
       lb_ip_addr: "192.168.1.245"
@@ -51,7 +51,7 @@ pgsql:
   build_version:
   clone_git: false
   nvme: false
-  storage_path: "/mnt/pgsql-storage"
+  storage_path: "/opt/pgsql-storage"
   replica: 3
   db:
     name: "jtestdb-pgsql"
@@ -86,7 +86,7 @@ _pgadmin:
   install: true
   namespace: pgadmin
   lb_ip_addr: "192.168.1.219"
-  storage_path: "/mnt/pgadmin-storage"
+  storage_path: "/opt/pgadmin-storage"
   storage_class: "pgadmin-storage"
   replica: 1
   db:

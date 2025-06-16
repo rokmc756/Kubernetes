@@ -5,7 +5,7 @@ mysql:
   ndb:
     namespace: mysql-ndb
     redundancy_level: 4
-    storage_path: "/mnt/mysql-ndb-storage"
+    storage_path: "/opt/mysql-ndb-storage"
     storage_class: "mysql-ndb-storage"
     mgmd:
       replica: 2
@@ -19,7 +19,7 @@ mysql:
     namespace: mysql-innodb
     replica: 3
     routes: 1
-    storage_path: "/mnt/mysql-innodb-storage"
+    storage_path: "/opt/mysql-innodb-storage"
     storage_class: "mysql-innodb-storage"
     lb_ip_addr: "192.168.1.244"
     primary:
@@ -34,7 +34,7 @@ mysql:
   clone_git: true
   nvme: false
   lb_ip_addr: "192.168.1.212"
-  storage_path: "/mnt/mysql-storage"
+  storage_path: "/opt/mysql-storage"
   db:
     name: "powerdns"
     user: "jomoon"
@@ -68,7 +68,7 @@ _phpmyadmin:
   install: true
   namespace: phpmyadmin
   lb_ip_addr: "192.168.1.237"
-  storage_path: "/mnt/phpmyadmin-storage"
+  storage_path: "/opt/phpmyadmin-storage"
   replica: 1
   db:
     name: "powerdns"

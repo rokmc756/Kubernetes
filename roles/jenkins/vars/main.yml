@@ -22,7 +22,7 @@ _jenkins:
   nvme: true
   namespace: jenkins
   storage_class: "jenkins-storage"
-  storage_path: "/mnt/jenkins-storage"
+  storage_path: "/opt/jenkins-storage"
   k8s:
     major_version: 1
     minor_version: 28

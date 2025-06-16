@@ -76,7 +76,7 @@ _gateway_api:
 
 _korifi:
   download_url: "https://github.com/cloudfoundry/korifi/releases/download"
-  storage_path: "/mnt/korifi-storage"
+  storage_path: "/opt/korifi-storage"
   major_version: 0
   minor_version: 14
   patch_version: 0

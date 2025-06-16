@@ -22,7 +22,7 @@ _wildfly:
   clone_git: true
   nvme: true
   namespace: wildfly
-  storage_path: "/mnt/wildfly-storage"
+  storage_path: "/opt/wildfly-storage"
   storage_class: "wildfly-storage"
   k8s:
     major_version: 1

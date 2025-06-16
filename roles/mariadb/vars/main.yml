@@ -5,11 +5,11 @@ mariadb:
   galera:
     namespace: mariadb-galera
     replica: 3
-    storage_path: "/mnt/mariadb-galera-storage"
+    storage_path: "/opt/mariadb-galera-storage"
   replica:
     namespace: mariadb-replica
     replica: 3
-    storage_path: "/mnt/mariadb-replica-storage"
+    storage_path: "/opt/mariadb-replica-storage"
     primary:
       lb_ip_addr: "192.168.1.245"
     secondary:
@@ -22,7 +22,7 @@ mariadb:
   clone_git: false
   nvme: false
   lb_ip_addr: "192.168.1.212"
-  storage_path: "/mnt/mariadb-storage"
+  storage_path: "/opt/mariadb-storage"
   db:
     name: "powerdns"
     user: "jomoon"
@@ -55,7 +55,7 @@ mariadb:
 _phpmyadmin:
   install: true
   lb_ip_addr: "192.168.1.237"
-  storage_path: "/mnt/phpmyadmin-storage"
+  storage_path: "/opt/phpmyadmin-storage"
   replica: 1
   db:
     name: "powerdns"

@@ -41,7 +41,8 @@ ollamaUrlsFromExtraEnv: false
 
 websocket:
   # -- Enables websocket support in Open WebUI with env `ENABLE_WEBSOCKET_SUPPORT`
-  enabled: false
+  # enabled: false
+  enabled: true
   # -- Specifies the websocket manager to use with env `WEBSOCKET_MANAGER`: redis (default)
   manager: redis
   # -- Specifies the URL of the Redis instance for websocket communication. Template with `redis://[:<password>@]<hostname>:<port>/<db>`
@@ -104,7 +105,8 @@ websocket:
 # -- Deploys a Redis cluster with subchart 'redis' from bitnami
 redis-cluster:
   # -- Enable Redis installation
-  enabled: false
+  # enabled: false
+  enabled: true
   # -- Redis cluster name (recommended to be 'open-webui-redis')
   # - In this case, redis url will be 'redis://open-webui-redis-master:6379/0' or 'redis://[:<password>@]open-webui-redis-master:6379/0'
   fullnameOverride: open-webui-redis
@@ -115,7 +117,7 @@ redis-cluster:
   # -- Replica configuration for the Redis cluster
   replica:
     # -- Number of Redis replica instances
-    replicaCount: 3
+    replicaCount: {{ _deepseek.replica.redis_cluster|int }}
 
 # -- Value of cluster domain
 clusterDomain: cluster.local
@@ -123,7 +125,7 @@ clusterDomain: cluster.local
 annotations: {}
 podAnnotations: {}
 podLabels: {}
-replicaCount: 1
+replicaCount: {{ _deepseek.replica.open_web_ui|int }}
 # -- Strategy for updating the workload manager: deployment or statefulset
 strategy: {}
 # -- Open WebUI image tags can be found here: https://github.com/open-webui/open-webui
@@ -215,7 +217,8 @@ persistence:
   enabled: true
   size: 2Gi
   # -- Use existingClaim if you want to re-use an existing Open WebUI PVC instead of creating a new one
-  existingClaim: "open-webui"
+  # existingClaim: "open-webui"
+  existingClaim: ""
   # -- Subdirectory of Open WebUI PVC to mount. Useful if root directory is not empty.
   subPath: ""
   # -- If using multiple replicas, you must update accessModes to ReadWriteMany

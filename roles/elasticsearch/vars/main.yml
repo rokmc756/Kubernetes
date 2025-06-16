@@ -22,7 +22,7 @@ _elasticsearch:
   clone_git: true
   nvme: true
   namespace: elasticsearch
-  storage_path: "/mnt/elasticsearch-storage"
+  storage_path: "/opt/elasticsearch-storage"
   storage_class: "elasticsearch-storage"
   k8s:
     major_version: 1

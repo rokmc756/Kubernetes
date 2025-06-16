@@ -22,7 +22,7 @@ _mongodb:
   clone_git: true
   nvme: true
   namespace: mongodb
-  storage_path: "/mnt/mongodb-storage"
+  storage_path: "/opt/mongodb-storage"
   storage_class: "mongodb-storage"
   k8s:
     major_version: 1
@@ -63,7 +63,7 @@ _mongo_express:
   patch_version: 5
   build_version:
   storage_class: "mongo-express-storage"
-  storage_path: "/mnt/mongo-express-storage"
+  storage_path: "/opt/mongo-express-storage"
   repo_name: cowboysysop
   download_link: "https://cowboysysop.github.io/charts/"
   replica: 1

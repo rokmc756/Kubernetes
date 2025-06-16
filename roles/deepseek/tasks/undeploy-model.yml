@@ -15,3 +15,30 @@
 - debug: msg={{ deploy_dsr1_model }}
   when: print_debug == true
 
+
+- name: Delete Ollama Models Store Service
+  shell: |
+    kubectl -n {{ _deepseek.namespace }} delete service/ollama-models-store
+  register: delete_ollama_models_store_svc
+  args:
+    executable: /bin/bash
+    chdir: "{{ base_path }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_ollama_models_store_svc }}
+  when: print_debug == true
+
+
+- name: Delete Ollama Models Store Statefulset
+  shell: |
+    kubectl -n {{ _deepseek.namespace }} delete statefulset.apps/ollama-models-store
+  register: delete_ollama_models_store_stfs
+  args:
+    executable: /bin/bash
+    chdir: "{{ base_path }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ delete_ollama_models_store_stfs }}
+  when: print_debug == true
+
+

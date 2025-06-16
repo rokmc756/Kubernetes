@@ -22,7 +22,7 @@ _redmine:
   clone_git: true
   nvme: true
   namespace: redmine
-  storage_path: "/mnt/redmine-storage"
+  storage_path: "/opt/redmine-storage"
   storage_class: "redmine-storage"
   k8s:
     major_version: 1

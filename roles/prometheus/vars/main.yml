@@ -22,7 +22,7 @@ _prometheus:
   clone_git: true
   nvme: true
   namespace: prometheus
-  storage_path: "/mnt/prometheus-storage"
+  storage_path: "/opt/prometheus-storage"
   storage_class: "prometheus-storage"
   k8s:
     major_version: 1

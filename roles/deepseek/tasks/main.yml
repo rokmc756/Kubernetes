@@ -63,12 +63,6 @@
   when: (( ui is defined and ui == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
 
 
-- name: Destory Open Web UI
-  import_tasks: uninstall-open-webui.yml
-  tags: destroy, uninstall
-  when: (( ui is defined and ui == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
-
-
 - name: Install Load Balancer
   import_tasks: install-lb.yml
   tags: apply, install
@@ -79,6 +73,12 @@
   import_tasks: uninstall-lb.yml
   tags: uninstall
   when: (( lb is defined and lb == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Destory Open Web UI
+  import_tasks: uninstall-open-webui.yml
+  tags: destroy, uninstall
+  when: (( ui is defined and ui == true ) or ( deepseek_all is defined and deepseek_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Undeploy DeepSeek R1 Model

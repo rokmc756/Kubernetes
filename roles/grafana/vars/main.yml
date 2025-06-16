@@ -11,7 +11,7 @@ _grafana:
   clone_git: true
   nvme: true
   namespace: grafana
-  storage_path: "/mnt/grafana-storage"
+  storage_path: "/opt/grafana-storage"
   storage_class: "grafana-storage"
   replica: 3
   db:

@@ -22,7 +22,7 @@ _scylladb:
   clone_git: true
   nvme: true
   namespace: scylladb
-  storage_path: "/mnt/scylladb-storage"
+  storage_path: "/opt/scylladb-storage"
   storage_class: "scylladb-storage"
   k8s:
     major_version: 1

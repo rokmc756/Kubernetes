@@ -23,7 +23,7 @@ _rancher:
       namespace: cattle-system
     hostname: "rancher.jtest.pivotal.io"
   storage_class: "rancher-storage"
-  storage_path: "/mnt/rancher-storage"
+  storage_path: "/opt/rancher-storage"
   kernel_parameters:
     - "net.ipv4.neigh.default.gc_thresh1 = 0"   # For ARP Cache
   lb:

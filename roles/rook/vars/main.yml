@@ -13,7 +13,7 @@ _rook:
   clone_git: true
   nvme: true
   namespace: rook-ceph
-  storage_path: "/mnt/rook-storage"
+  storage_path: "/opt/rook-storage"
   storage_class: "rook-storage"
   lb:
     ip_addr: "192.168.1.219"
@@ -137,11 +137,11 @@ _ssl:
 #    - { name: "rgw-p01", pg_count: 100 }
 #    - { name: "nfs-p01", pg_count: 100 }
 #  fs:
-#    - { pool: "cephfs-p01", name: "cephfs-p01-fs01", size: "1G", mount_dir: "/mnt/cephfs-p01-fs01" }
-#    - { pool: "default-p01", name: "default-p01-fs01", size: "1G", mount_dir: "/mnt/default-p01-fs01" }
-#    - { pool: "block-p01", name: "block-p01-fs01", size: "1G", mount_dir: "/mnt/block-p01-fs01" }
-#    - { pool: "rgw-p01", name: "rgw-p01-fs01", size: "1G", mount_dir: "/mnt/rgw-p01-fs01" }
-#    - { pool: "nfs-p01", name: "nfs-p01-fs01", size: "1G", mount_dir: "/mnt/nfs-p01-fs01" }
+#    - { pool: "cephfs-p01", name: "cephfs-p01-fs01", size: "1G", mount_dir: "/opt/cephfs-p01-fs01" }
+#    - { pool: "default-p01", name: "default-p01-fs01", size: "1G", mount_dir: "/opt/default-p01-fs01" }
+#    - { pool: "block-p01", name: "block-p01-fs01", size: "1G", mount_dir: "/opt/block-p01-fs01" }
+#    - { pool: "rgw-p01", name: "rgw-p01-fs01", size: "1G", mount_dir: "/opt/rgw-p01-fs01" }
+#    - { pool: "nfs-p01", name: "nfs-p01-fs01", size: "1G", mount_dir: "/opt/nfs-p01-fs01" }
 #  image:
 #    default:
 #      - { name: "default-img01", pool: "default-p01", size: "1G" }

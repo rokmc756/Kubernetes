@@ -9,7 +9,7 @@ _zabbix:
   build_version:
   namespace: zabbix
   storage_class: "zabbix-storage"
-  storage_path: "/mnt/zabbix-storage"
+  storage_path: "/opt/zabbix-storage"
   replica: 3
   db:
     name: "zabbix"

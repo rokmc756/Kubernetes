@@ -6,3 +6,15 @@
 - debug: msg={{ uninstall_ollama_operator }}
   when: print_debug == true
 
+
+- name: Validate if Ollama Operator Containers are Deleted
+  shell: |
+    kubectl get pods -n {{ _ollama.namespace }} | grep ollama-models-store | awk '{print $3}' | grep -E 'Terminating|Running' | wc -l
+  register: delete_ollama_operator_container
+  ignore_errors: true
+  until: delete_ollama_operator_container.stdout|int == 0
+  retries: 30
+  delay: 10
+- debug: msg={{ delete_ollama_operator_container }}
+  when: print_debug == true
+

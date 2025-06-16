@@ -23,7 +23,7 @@ _stratos:
   nvme: true
   namespace: stratos
   storage_class: "stratos-storage"
-  storage_path: "/mnt/stratos-storage"
+  storage_path: "/opt/stratos-storage"
   repo_name: stratos
   download_link: "https://cloudfoundry.github.io/stratos"
   k8s:
