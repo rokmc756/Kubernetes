@@ -1,13 +1,3 @@
-#curl http://192.168.1.171:32379/v1/chat/completions -H "Content-Type: application/json" -d '{
-#  "model": "phi",
-#  "messages": [
-#    {
-#      "role": "user",
-#      "content": "Hello!"
-#    }
-#  ]
-#}'
-
 
 #curl http://192.168.1.210:11434/api/generate -d '{
 #  "model": "EEVE-Korean-Instruct-10.8B-v1.0-Q4_0",
@@ -18,7 +8,29 @@
 # OLLAMA_HOST=192.168.1.171:32379 ollama run phi
 
 
+#curl http://192.168.1.210:11434/api/generate -d '{
+#  "model": "phi",
+#  "prompt": "Let me know curent sttus of whenther in South Korea"
+#}'
+
+# OLLAMA_HOST=192.168.1.210:11434 ollama run phi
+# OLLAMA_HOST=192.168.1.210:11434 ollama run deepseek-r1
+
+
+
+# curl -X POST http://10.101.81.199:11434/api/generate -H "Content-Type: application/json" \
+
+#curl -X POST http://192.168.1.210:11434/api/generate -H "Content-Type: application/json" \
+#-d '{
+#        "model": "deepseek-r1",
+#        "prompt": "Hello, how are you today?",
+#        "stream": false
+#}'
+
+
 curl http://192.168.1.210:11434/api/generate -d '{
-  "model": "phi",
-  "prompt": "Let me know curent sttus of whenther in South Korea"
+  "model": "deepseek-r1",
+  "prompt": "오늘 하루의 응원 문구를 하나 추천해줘"
 }'
+
+
