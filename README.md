@@ -17,14 +17,14 @@ Supported OS for ansible target host should be prepared with package repository 
 
 ## Prepare ansible host to run this Ansible Playbook
 * MacOS
-```
+```bash
 $ xcode-select --install
 $ brew install ansible
 $ brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
 ```
 
 * Fedora/CentOS/RHEL, Ubuntu, OpenSUSE
-```
+```bash
 $ yum install ansible
 $ apt install ansible
 $ zypper install ansible
@@ -33,7 +33,7 @@ $ zypper install ansible
 ## How to Deploy and Destroy Kubernetes Cluster
 #### 1) Configure Variables and Inventory with Hostnames, IP Addresses, sudo Username and Password
 ##### Configure Inventory
-```yaml
+```ini
 $ vi ansible-hosts
 [all:vars]
 ssh_key_filename="id_rsa"
@@ -42,17 +42,21 @@ remote_machine_password="changeme"
 ansible_python_interpreter=/usr/bin/python3
 
 [master]
-rk9-master ansible_ssh_host=192.168.0.91
+rk9-node01 ansible_ssh_host=192.168.1.171
+
+[master]
+rk9-node02 ansible_ssh_host=192.168.1.172
 
 [workers]
-rk9-node01 ansible_ssh_host=192.168.0.93
-rk9-node02 ansible_ssh_host=192.168.0.94
-rk9-node03 ansible_ssh_host=192.168.0.95
+rk9-node01 ansible_ssh_host=192.168.1.173
+rk9-node02 ansible_ssh_host=192.168.1.174
+rk9-node03 ansible_ssh_host=192.168.1.175
+rk9-node04 ansible_ssh_host=192.168.1.176
 ```
 
 ##### Configure Variables
 ```yaml
-$ vi roles/init-hosts/vars/main.yml
+$ vi roles/hosts/vars/main.yml
 ansible_ssh_pass: "changeme"
 ansible_become_pass: "changeme"
 sudo_user: "kubeadm"
@@ -84,11 +88,11 @@ k8s:
   base_path: /root
   host_num: "{{ groups['workers'] | length }}"
   net:
-    type: "virtual"                # Or Physical
+    type: "virtual"
     gateway: "192.168.0.1"
-    ipaddr0: "192.168.0.7"
-    ipaddr1: "192.168.1.7"
-    ipaddr2: "192.168.2.7"
+    ipaddr0: "192.168.0.17"
+    ipaddr1: "192.168.1.17"
+    ipaddr2: "192.168.2.17"
 ~~ snip
   cni:
     name: calico # kube-flannel
@@ -102,28 +106,28 @@ k8s:
 
 
 #### 2) Initialize Linux Hosts to exchanges ssh keys for passwordless login and install neccessary packages as well as configure /etc/hosts file
-```yaml
+```bash
 $ make hosts r=init s=all
 ```
 [![YouTube](http://i.ytimg.com/vi/mFp3oi2-sb0/hqdefault.jpg)](https://www.youtube.com/watch?v=mFp3oi2-sb0)
 
 
 #### 3) Deploy Kubernetes Cluster
-```yaml
+```bash
 $ make k8s r=install s=all
 ```
 [![YouTube](http://i.ytimg.com/vi/ZAYEYPk-NEk/hqdefault.jpg)](https://www.youtube.com/watch?v=ZAYEYPk-NEk)
 
 
 #### 4) Destroy Kubernetes Cluster
-```yaml
+```bash
 $ make k8s r=uninstall s=all
 ```
 [![YouTube](http://i.ytimg.com/vi/OW_NdpsjJSg/hqdefault.jpg)](https://www.youtube.com/watch?v=OW_NdpsjJSg)
 
 
 #### 5) Deploy Rancher
-```yaml
+```bash
 $ make rancher r=install s=all
 ~~~
 ```
@@ -131,7 +135,7 @@ $ make rancher r=install s=all
 
 
 #### 6) Destroy Rancher
-```yaml
+```bash
 $ make rancher r=uninstall s=all
 ~~~
 ```
@@ -139,7 +143,7 @@ $ make rancher r=uninstall s=all
 
 
 #### 7) Deploy Rook Ceph
-```yaml
+```bash
 $ make rook r=install s=all
 ~~~
 ```
@@ -147,31 +151,30 @@ $ make rook r=install s=all
 
 
 #### 8) Destroy Rook Ceph
-```yaml
+```bash
 $ make rook r=uninstall s=all
 ~~~
 ```
 
 #### 9) Deploy Open WebUI for Deepseek R1
-```yaml
+```bash
 $ make deepseek r=install s=all
-~~~
 ```
-[![YouTube](http://i.ytimg.com/vi/fw0qFdploNQ/hqdefault.jpg)](https://www.youtube.com/watch?v=fw0qFdploNQ)
+[![YouTube](https://github.com/rokmc756/Kubernetes/blob/main/roles/deepseek/images/01-deploy-deepseek.jpg)](https://youtu.be/Ze9baCb9QQs?si=jfRT1uSyX7DcJI6F)
 
 
 #### 10) Destroy Open WebUI for Deepseek R1
-```yaml
+```bash
 $ make deepseek r=uninstall s=all
-~~~
 ```
-[![YouTube](http://i.ytimg.com/vi/jSCiGs7OCFg/hqdefault.jpg)](https://www.youtube.com/watch?v=jSCiGs7OCFg)
+[![YouTube](https://youtu.be/Ze9baCb9QQs?si=jfRT1uSyX7DcJI6F)](https://www.youtube.com/watch?v=jSCiGs7OCFg)
 
 
 ### 9) Reinitialize Kubernetes Cluster
 The make reinit will reinitialize k8s cluster referring reinit.yml playbook if you are struggle the uncertain situation such as stuck or panic
-```yaml
+```bash
 $ make k8s r=reinit s=all
+```
 
 
 ## References
