@@ -5,7 +5,6 @@
   register: remove_helm_repos
   ignore_errors: true
   with_items:
-    - { name: 'jetstack', link: 'https://charts.jetstack.io' }
     - { name: 'open-webui',  link: 'https://helm.openwebui.comi' }
     - { name: 'nginx-ingress',  link: 'https://kubernetes.github.io/ingress-nginx' }
 - debug: msg={{ remove_helm_repos }}

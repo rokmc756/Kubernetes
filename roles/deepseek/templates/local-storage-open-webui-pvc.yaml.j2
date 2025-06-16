@@ -37,11 +37,12 @@ spec:
   resources:
     requests:
       storage: 10Gi
+{% for n in range(0, _deepseek.replica.redis_cluster|int) %}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: redis-data-open-webui-redis-replicas-0
+  name: redis-data-open-webui-redis-replicas-{{ n }}
   namespace: {{ _deepseek.namespace }}
 spec:
   storageClassName: {{ _deepseek.storage_class }}
@@ -50,30 +51,5 @@ spec:
   resources:
     requests:
       storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-data-open-webui-redis-replicas-1
-  namespace: {{ _deepseek.namespace }}
-spec:
-  storageClassName: {{ _deepseek.storage_class }}
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-data-open-webui-redis-replicas-2
-  namespace: {{ _deepseek.namespace }}
-spec:
-  storageClassName: {{ _deepseek.storage_class }}
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
+{% endfor %}
 

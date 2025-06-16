@@ -22,7 +22,7 @@
 - debug: msg={{ copy_local_pv_config_yaml }}
 
 
-- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+- name: Create Storage Class and PV
   shell: |
     kubectl create -f {{ item }}
   register: create_local_pv

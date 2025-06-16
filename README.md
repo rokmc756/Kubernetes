@@ -103,88 +103,28 @@ k8s:
 
 #### 2) Initialize Linux Hosts to exchanges ssh keys for passwordless login and install neccessary packages as well as configure /etc/hosts file
 ```yaml
-$ vi install.yml
----
-- hosts: all
-  become: yes
-  vars:
-    container_runtime: "containerd"   # crio or podman
-    print_debug: true
-    install_pkgs: true
-    disable_firewall: true
-    config_kube_software: true
-    init_k8s: true
-    stop_services: true
-  roles:
-    - init-hosts
-
-$ make install
+$ make hosts r=init s=all
 ```
 [![YouTube](http://i.ytimg.com/vi/mFp3oi2-sb0/hqdefault.jpg)](https://www.youtube.com/watch?v=mFp3oi2-sb0)
 
 
 #### 3) Deploy Kubernetes Cluster
 ```yaml
-$ vi install.yml
----
-- hosts: all
-  become: yes
-  vars:
-    container_runtime: "containerd"   # crio or podman
-    print_debug: true
-    install_pkgs: true
-    disable_firewall: true
-    config_kube_software: true
-    init_k8s: true
-    stop_services: true
-  roles:
-    - k8s
-
-$ make install
+$ make k8s r=install s=all
 ```
 [![YouTube](http://i.ytimg.com/vi/ZAYEYPk-NEk/hqdefault.jpg)](https://www.youtube.com/watch?v=ZAYEYPk-NEk)
 
 
 #### 4) Destroy Kubernetes Cluster
 ```yaml
-$ vi uninstall.yml
----
-- hosts: all
-  become: yes
-  vars:
-    container_runtime: "containerd"   # containerd
-    print_debug: true
-    stop_services: true
-    uninstall_pkgs: true
-    uninstall_config: true
-    enable_firewall: false
-    reboot_required: true
-  roles:
-    - k8s
-
-$ make uninstall
+$ make k8s r=uninstall s=all
 ```
 [![YouTube](http://i.ytimg.com/vi/OW_NdpsjJSg/hqdefault.jpg)](https://www.youtube.com/watch?v=OW_NdpsjJSg)
 
 
 #### 5) Deploy Rancher
 ```yaml
-$ vi install.yml
----
-- hosts: all
-  become: yes
-  vars:
-    container_runtime: "containerd"   # crio or podman
-    print_debug: true
-    install_pkgs: true
-    disable_firewall: true
-    config_kube_software: true
-    init_k8s: true
-    stop_services: true
-  roles:
-    - rancher
-
-$ make install
+$ make rancher r=install s=all
 ~~~
 ```
 [![YouTube](http://i.ytimg.com/vi/8a8S0V1Gs4E/hqdefault.jpg)](https://www.youtube.com/watch?v=8a8S0V1Gs4E)
@@ -192,22 +132,7 @@ $ make install
 
 #### 6) Destroy Rancher
 ```yaml
-$ vi uninstall.yml
----
-- hosts: all
-  become: yes
-  vars:
-    container_runtime: "containerd"   # containerd
-    print_debug: true
-    stop_services: true
-    uninstall_pkgs: true
-    uninstall_config: true
-    enable_firewall: false
-    reboot_required: true
-  roles:
-    - rancher
-
-$ make uninstall
+$ make rancher r=uninstall s=all
 ~~~
 ```
 [![YouTube](http://i.ytimg.com/vi/QTmhB9awxY8/hqdefault.jpg)](https://www.youtube.com/watch?v=QTmhB9awxY8)
@@ -215,22 +140,7 @@ $ make uninstall
 
 #### 7) Deploy Rook Ceph
 ```yaml
-$ vi install.yml
----
-- hosts: all
-  become: yes
-  vars:
-    container_runtime: "containerd"   # crio or podman
-    print_debug: true
-    install_pkgs: true
-    disable_firewall: true
-    config_kube_software: true
-    init_k8s: true
-    stop_services: true
-  roles:
-    - rook-ceph
-
-$ make install
+$ make rook r=install s=all
 ~~~
 ```
 [![YouTube](http://i.ytimg.com/vi/fw0qFdploNQ/hqdefault.jpg)](https://www.youtube.com/watch?v=fw0qFdploNQ)
@@ -238,22 +148,21 @@ $ make install
 
 #### 8) Destroy Rook Ceph
 ```yaml
-$ vi uninstall.yml
----
-- hosts: all
-  become: yes
-  vars:
-    container_runtime: "containerd"   # containerd
-    print_debug: true
-    stop_services: true
-    uninstall_pkgs: true
-    uninstall_config: true
-    enable_firewall: false
-    reboot_required: true
-  roles:
-    - rook-ceph
+$ make rook r=uninstall s=all
+~~~
+```
 
-$ make uninstall
+#### 9) Deploy Open WebUI for Deepseek R1
+```yaml
+$ make deepseek r=install s=all
+~~~
+```
+[![YouTube](http://i.ytimg.com/vi/fw0qFdploNQ/hqdefault.jpg)](https://www.youtube.com/watch?v=fw0qFdploNQ)
+
+
+#### 10) Destroy Open WebUI for Deepseek R1
+```yaml
+$ make deepseek r=uninstall s=all
 ~~~
 ```
 [![YouTube](http://i.ytimg.com/vi/jSCiGs7OCFg/hqdefault.jpg)](https://www.youtube.com/watch?v=jSCiGs7OCFg)
@@ -262,21 +171,7 @@ $ make uninstall
 ### 9) Reinitialize Kubernetes Cluster
 The make reinit will reinitialize k8s cluster referring reinit.yml playbook if you are struggle the uncertain situation such as stuck or panic
 ```yaml
-$ vi reinit.yml
-- hosts: all
-  become: yes
-  vars:
-    container_runtime: "containerd"   # crio or podman?
-    print_debug: true
-    enable_firewall: false
-    disable_firewall: true
-    stop_services: true
-    calico_network: false
-  roles:
-    - k8s
-
-$ make reinit
-```
+$ make k8s r=reinit s=all
 
 
 ## References
@@ -309,15 +204,4 @@ $ make reinit
 ## Debugging
 * DNS - https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/
 * Network - https://yandex.cloud/en/docs/managed-kubernetes/operations/calico?utm_referrer=https%3A%2F%2Fwww.google.com%2F
-
-
-## IP Addresses for Services
-- KubeVirt   : 192.168.1.217:8080
-- Rook       : 192.168.1.219:8443
-- Harbor     : 192.168.1.218
-- Dashboard  : 192.168.1.212
-- Stratos    : 192.168.1.221
-- Grafana    : 192.168.1.220
-- MariaDB    : 192.168.1.236
-- phpMyAdmin : 192.168.1.237
 

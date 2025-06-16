@@ -68,11 +68,8 @@ _deepseek:
     redis_cluster: 3
     postgres: 1
 
-deepseek_total_pvs: "{{ _deepseek.postgres|int + _deepseek.replica.open_web_ui|int + _deepseek.replica.redis_cluster|int + 4 }}"
 
-
-# NAME                          TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)           AGE
-# ollama-model-deepseek-r1-lb   LoadBalancer   10.101.81.199    192.168.1.210   11434:30913/TCP   11m
+deepseek_total_pvs: "{{ _deepseek.replica.postgres|int + _deepseek.replica.open_web_ui|int + _deepseek.replica.redis_cluster|int + 4 }}"
 
 
 _helm:
@@ -113,4 +110,5 @@ _ssl:
   organization: "Pivotal"
   common_name: "jest.pivotal.io"
   email: "rokmc756@gmail.com"
+
 
