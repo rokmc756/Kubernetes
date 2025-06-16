@@ -68,8 +68,8 @@
     dest: "{{ base_path }}/{{ item }}"
   register: copy_nginx_ingress_config
   with_items:
-    - "mongo-express-ingress-class.yaml"
-    - "create-mongo-express-ingress.yaml"
+    - "deepseek-ingress-class.yaml"
+    - "create-deepseek-ingress.yaml"
 - debug: msg={{ copy_nginx_ingress_config }}
 
 
@@ -78,7 +78,7 @@
     kubectl apply -f {{ base_path }}/{{ item }}
   register: apply_nginx_ingress_class
   with_items:
-    - "mongo-express-ingress-class.yaml"
+    - "deepseek-ingress-class.yaml"
   args:
     chdir: "{{ base_path }}"
   environment:
@@ -100,12 +100,12 @@
   when: print_debug == true
 
 
-- name: Create Mongo Express Ingress
+- name: Create DeepSeek Ingress
   shell: |
     kubectl apply -f {{ base_path }}/{{ item }}
   register: create_elastic_ingress
   with_items:
-    - "create-mongo-express-ingress.yaml"
+    - "create-deepseek-ingress.yaml"
   args:
     chdir: "{{ base_path }}"
   environment:

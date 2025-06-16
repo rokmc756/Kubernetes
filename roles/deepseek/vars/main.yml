@@ -46,7 +46,7 @@ _deepseek:
       namespace: deepseek
   ingress:
     metadata:
-      name: deepseek-ingress
+      name: nginx-ingress
       namespace: deepseek
     hostname: "deepseek.jtest.pivotal.io"
   kernel_parameters:
@@ -55,15 +55,20 @@ _deepseek:
     - "fs.inotify.max_user_watches=755360"
   svc:
     - { name: "ollama-models-store", lb_ip_addr: "192.168.1.221" }
-    - { name: "open-webui", lb_ip_addr: "192.168.1.222" }
     - { name: "open-webui-ollama", lb_ip_addr: "192.168.1.223" }
     - { name: "open-webui-pipelines", lb_ip_addr: "192.168.1.224" }
     - { name: "open-webui-postgres", lb_ip_addr: "192.168.1.225" }
+    - { name: "open-webui-redis", lb_ip_addr: "192.168.1.226" }
+    - { name: "open-webui-redis-master", lb_ip_addr: "192.168.1.227" }
+    - { name: "open-webui-redis-replicas", lb_ip_addr: "192.168.1.228" }
+    # - { name: "open-webui", lb_ip_addr: "192.168.1.222" }
+    # - { name: "ollama-model-deepseek-r1-lb", lb_ip_addr: "192.168.1.220"
   replica:
     open_web_ui: 3
     redis_cluster: 3
+    postgres: 1
 
-deepseek_total_pvs: "{{ _deepseek.replica.open_web_ui|int + _deepseek.replica.redis_cluster|int + 3 }}"
+deepseek_total_pvs: "{{ _deepseek.postgres|int + _deepseek.replica.open_web_ui|int + _deepseek.replica.redis_cluster|int + 4 }}"
 
 
 # NAME                          TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)           AGE
@@ -82,17 +87,17 @@ _nginx:
   ingress:
     install: true
     name: nginx-ingress
-    class_name: deepseek-express-ingress-class
+    class_name: deepseek-ingress-class
     namespace: "nginx-ingress"
     major_version:
     minor_version:
     patch_version:
     replica: 1
-    hostname: deepseek-express
+    hostname: open-webui
     domain: jtest.pivotal.io
-    service: deepseek-express
-    ip_addr: "192.168.1.219"
-    port: 8081
+    service: open-webui
+    ip_addr: "192.168.1.229"
+    port: 80
   k8s_ingress:
     major_version: 3
     minor_version: 0

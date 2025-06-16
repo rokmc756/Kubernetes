@@ -6,8 +6,8 @@
   register: copy_nginx_ingress_config
   ignore_errors: true
   with_items:
-    - "mongo-express-ingress-class.yaml"
-    - "create-mongo-express-ingress.yaml"
+    - "deepseek-ingress-class.yaml"
+    - "create-deepseek-ingress.yaml"
 - debug: msg={{ copy_nginx_ingress_config }}
 
 
@@ -17,8 +17,8 @@
   register: delete_nginx_ingress
   ignore_errors: true
   with_items:
-    - "create-mongo-express-ingress.yaml"
-    - "mongo-express-ingress-class.yaml"
+    - "create-deepseek-ingress.yaml"
+    - "deepseek-ingress-class.yaml"
   args:
     chdir: "{{ base_path }}/"
   environment:
@@ -48,7 +48,7 @@
   retries: 100
   delay: 10
   with_items:
-    - { svc: "ingress-nginx-controller-", replica: "{{ _mongo_express.replica }}" }
+    - { svc: "ingress-nginx-controller-", replica: "{{ _deepseek.replica }}" }
 - debug: msg={{ check_nginx_ingress_controller_container }}
   when: print_debug == true
 
@@ -73,7 +73,7 @@
   register: delete_nginx_ingress_config
   ignore_errors: true
   with_items:
-    - "mongo-express-ingress-class.yaml"
-    - "create-mongo-express-ingress.yaml"
+    - "deepseek-ingress-class.yaml"
+    - "create-deepseek-ingress.yaml"
 - debug: msg={{ delete_nginx_ingress_config }}
 
