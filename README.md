@@ -13,7 +13,7 @@ Ubuntu 22.x
 
 ## Prerequisite for ansible host
 MacOS or Windows Linux Subsysetm or Many kind of Linux Distributions should have ansible as ansible host.\
-Supported OS for ansible target host should be prepared with package repository configured such as yum, dnf and apt as well as zypper\
+Supported OS for ansible target host should be prepared with package repository configured such as yum, dnf and apt as well as zypper
 
 ## Prepare ansible host to run this Ansible Playbook
 * MacOS
@@ -129,7 +129,6 @@ $ make k8s r=uninstall s=all
 #### 5) Deploy Rancher
 ```bash
 $ make rancher r=install s=all
-~~~
 ```
 [![YouTube](http://i.ytimg.com/vi/8a8S0V1Gs4E/hqdefault.jpg)](https://www.youtube.com/watch?v=8a8S0V1Gs4E)
 
@@ -137,7 +136,6 @@ $ make rancher r=install s=all
 #### 6) Destroy Rancher
 ```bash
 $ make rancher r=uninstall s=all
-~~~
 ```
 [![YouTube](http://i.ytimg.com/vi/QTmhB9awxY8/hqdefault.jpg)](https://www.youtube.com/watch?v=QTmhB9awxY8)
 
@@ -145,7 +143,6 @@ $ make rancher r=uninstall s=all
 #### 7) Deploy Rook Ceph
 ```bash
 $ make rook r=install s=all
-~~~
 ```
 [![YouTube](http://i.ytimg.com/vi/fw0qFdploNQ/hqdefault.jpg)](https://www.youtube.com/watch?v=fw0qFdploNQ)
 
@@ -153,7 +150,6 @@ $ make rook r=install s=all
 #### 8) Destroy Rook Ceph
 ```bash
 $ make rook r=uninstall s=all
-~~~
 ```
 
 #### 9) Deploy Open WebUI for Deepseek R1
