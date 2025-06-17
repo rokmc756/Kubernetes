@@ -164,11 +164,11 @@ $ make deepseek r=install s=all
 $ make deepseek r=uninstall s=all
 ```
 
-### 11) Configure Open WebUI for DeepSeek R1 Model
+#### 11) Configure Open WebUI for DeepSeek R1 Model
 [![YouTube](https://github.com/rokmc756/Kubernetes/blob/main/roles/deepseek/images/02-config-open-webui.jpg))](https://www.youtube.com/watch?v=jSCiGs7OCFg)
 
 
-### 12) Reinitialize Kubernetes Cluster
+#### 12) Reinitialize Kubernetes Cluster
 The make reinit will reinitialize k8s cluster referring reinit.yml playbook if you are struggle the uncertain situation such as stuck or panic
 ```bash
 $ make k8s r=reinit s=all
