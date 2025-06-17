@@ -165,7 +165,7 @@ $ make deepseek r=uninstall s=all
 ```
 
 #### 11) Configure Open WebUI for DeepSeek R1 Model
-[![YouTube](https://github.com/rokmc756/Kubernetes/blob/main/roles/deepseek/images/02-config-open-webui.jpg))](https://www.youtube.com/watch?v=jSCiGs7OCFg)
+[![YouTube](https://github.com/rokmc756/Kubernetes/blob/main/roles/deepseek/images/02-config-open-webui.jpg)](https://www.youtube.com/watch?v=jSCiGs7OCFg)
 
 
 #### 12) Reinitialize Kubernetes Cluster
