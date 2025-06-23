@@ -120,6 +120,3 @@ $ make rook r=remove s=param
 or
 $ make rook r=uninstall s=all
 ```
-
-### Reference
-
