@@ -21,8 +21,10 @@ Rook is implemented in golang. Ceph is implemented in C++ where the data path is
 * Kubernetes 1.28.x or later versions
 
 
-### Configure variables for kafka version and location which will be installed as well as other parameters
-```
+### Configure variables for Rook Ceph and location which will be installed as well as other parameters
+```bash
+$ vi roles/rook/vars/main.yml
+
 base_path: /root
 _rook:
   install: true
@@ -91,11 +93,10 @@ _nginx:
     major_version: 3
     minor_version: 0
     patch_version: 2
-
 ```
 
 ### How to Deploy Rook Ceph
-```
+```bash
 $ make rook r=apply s=param
 $ make rook r=enable s=repo
 $ make rook r=deploy s=ceph
@@ -109,7 +110,7 @@ $ make rook r=install s=all
 ```
 
 ### How to Destroy Rook Ceph
-```
+```bash
 $ make rook r=delete s=lb
 $ make rook r=delete s=ingress
 $ make rook r=delete s=cm ( optional )
