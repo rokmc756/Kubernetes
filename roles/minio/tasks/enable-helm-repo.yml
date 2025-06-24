@@ -18,8 +18,10 @@
   register: add_helm_repos
   with_items:
     - { name: 'jetstack', link: 'https://charts.jetstack.io' }
-    - { name: 'bitnami',  link: 'https://charts.bitnami.com/bitnami' }
+    - { name: 'minio',    link: 'https://charts.min.io' }
 - debug: msg={{ add_helm_repos }}
+    # - { name: 'bitnami',  link: 'https://charts.bitnami.com/bitnami' }
+    # - { name: 'minio',    link: 'https://helm.min.io' }
 
 
 - name: Update Helm Repo

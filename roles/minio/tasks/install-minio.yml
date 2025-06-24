@@ -1,3 +1,4 @@
+---
 - name: Create Namespace for Persistent Volumes
   shell: |
     kubectl create namespace {{ _minio.namespace }}
@@ -20,7 +21,7 @@
 - debug: msg={{ copy_cluster_local_pvc_config_yaml }}
 
 
-- name: Cluster Settings for a Production Cluster Running in a Dynamic Cloud Environment including VMware
+- name: Create Persistent Volumes
   shell: |
     kubectl create -f {{ item }}
   register: create_pvc
@@ -46,7 +47,7 @@
 
 - name: Deploy MinIO
   shell: |
-    /usr/local/bin/helm install minio bitnami/minio -n {{ _minio.namespace }} -f {{ base_path }}/minio-values.yaml
+    /usr/local/bin/helm install minio minio/minio -n {{ _minio.namespace }} -f {{ base_path }}/minio-values.yaml
   register: deploy_minio
 - debug: msg={{ deploy_minio }}
   when: print_debug == true

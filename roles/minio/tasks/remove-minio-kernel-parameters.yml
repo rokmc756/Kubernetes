@@ -9,7 +9,7 @@
   when: print_debug == true
 
 
-- name: Remove Kernel Parameters for Kafka
+- name: Remove Kernel Parameters for Minio
   lineinfile:
     dest: /etc/sysctl.d/sysctl-k8s.conf
     regexp: "{{ item }}"

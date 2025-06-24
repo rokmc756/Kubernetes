@@ -1,0 +1,10 @@
+---
+- name: Copy MinIO Helm Config
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_minio_helm_config
+  with_items:
+    - "minio-values.yaml"
+- debug: msg={{ copy_minio_helm_config }}
+

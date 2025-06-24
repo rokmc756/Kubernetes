@@ -12,7 +12,7 @@ spec:
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
+  persistentVolumeReclaimPolicy: Delete  # Retain
   storageClassName: {{ _minio.storage_class }}
   local:
     path: {{ _minio.storage_path }}-{{ n }}

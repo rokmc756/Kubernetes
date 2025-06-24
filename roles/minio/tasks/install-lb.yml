@@ -15,6 +15,7 @@
     chdir: "{{ base_path }}"
   with_items:
     - { svc: "minio", lb_ip_addr: "{{ _minio.lb.ip_addr }}" }
+    - { svc: "minio-console", lb_ip_addr: "192.168.1.218" }
 - debug: msg={{ apply_minio_lb }}
   when: print_debug == true
 

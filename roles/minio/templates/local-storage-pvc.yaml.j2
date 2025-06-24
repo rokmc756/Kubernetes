@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: data-minio-{{ n }}
+  name: export-minio-{{ n }}
   namespace: {{ _minio.namespace }}
 spec:
   storageClassName: {{ _minio.storage_class }}
