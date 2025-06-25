@@ -1,38 +1,44 @@
 ---
-#- name: Restart Containerd to Apply Changes in config.toml
-#  systemd:
-#    name: containerd
-#    state: restarted
-#  register: restart_containerd
-#  until: restart_containerd
-#  retries: 20
-#  delay: 10
-
-
 - name: Load Kernel Modules for Kurbernetes
   shell: |
     modprobe {{ item }}
   with_items:
     - overlay
     - br_netfilter
+
+
+- name: Create Default Containerd Directory
+  file:
+    path: "/etc/containerd"
+    state: directory
+    owner: root
+    group: root
+    mode: 0777
+  register: create_default_containerd_directory
+- debug: msg={{ create_default_containerd_directory }}
+  when: print_debug == true
+
+
+- name: Config Default Containerd
+  shell: |
+    containerd config default > /etc/containerd/config.toml
   notify:
+    - Stop Docker
+    - Stop Containerd
+    - Stop Kubelet
     - Restart Containerd
+
+
+- name: Force to Stop and Restart Services
+  meta: flush_handlers
 
 
 - name: Reset Kubernetes
   shell: |
     kubeadm reset -f
-  when: inventory_hostname in groups['master']
-
-
-- name: Restart Containerd to Apply Changes in config.toml
-  systemd:
-    name: containerd
-    state: restarted
-  register: restart_containerd
-  until: restart_containerd
-  retries: 20
-  delay: 10
+  register: reset_kubernetes
+  notify:
+    - Restart Containerd
   when: inventory_hostname in groups['master']
 
 
