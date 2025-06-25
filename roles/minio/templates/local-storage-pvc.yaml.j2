@@ -1,4 +1,4 @@
-{% for n in range(0, _minio.replica|int) %}
+{% for n in range(0, _minio.replica) %}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

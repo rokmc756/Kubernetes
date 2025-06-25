@@ -49,6 +49,36 @@ _minio:
   replica: 4
 
 
+_mc:
+  download: false
+  server_url: https://dl.minio.io/server/minio/release/linux-amd64/minio
+  user_id: ""
+  user: root
+  service: minio
+  user_home: /root
+  config: "/root/.minio/config.json"
+  client_config: /root/.mc/config.json
+  bin: /usr/local/bin/minio
+  port: 9000
+  static_port: 9001
+  client_install: yes
+  client_url: https://dl.minio.io/client/mc/release/linux-amd64/mc
+  client_checksum:
+  client_bin: /usr/local/bin/mc
+  client_admin_host:
+  check_calendar: weekly
+  config_opts:
+    hosts:
+      minio:
+        url: http://minio-s3.jtest.pivotal.io:9000
+        accessKey: "admin"
+        secretKey: "changeme"
+        api: S3v4
+  release_date: 20240307
+  access_key: jomoon
+  secret_key: changeme
+
+
 total_minio_containers: "{{ _minio.replica|int }}"
 
 

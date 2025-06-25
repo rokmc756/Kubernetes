@@ -21,10 +21,10 @@
   when: (( repo is defined and repo == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
-- name: Install Kustomize
-  import_tasks: install-kustomize.yml
-  tags: setup, install
-  when: (( kustomize is defined and kustomize == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+#- name: Install Kustomize
+#  import_tasks: install-kustomize.yml
+#  tags: setup, install
+#  when: (( kustomize is defined and kustomize == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Copy Minio Template
@@ -55,6 +55,12 @@
   import_tasks: install-ingress.yml
   tags: setup, install
   when: (( ingress is defined and ingress == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Install MinIO Client
+  import_tasks: install-mc.yml
+  tags: setup, install
+  when: (( mc is defined and mc == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Unstall NGINX Ingress

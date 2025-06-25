@@ -1,11 +1,14 @@
 ## Provide a name in place of minio for `app:` labels
 nameOverride: ""
 
+
 ## Provide a name to substitute for the full names of resources
 fullnameOverride: ""
 
+
 ## set kubernetes cluster domain where minio is running
 clusterDomain: "cluster.local"
+
 
 ## Set default image, imageTag, and imagePullPolicy. mode is used to indicate the
 image:
@@ -16,6 +19,7 @@ image:
 imagePullSecrets: []
 # - name: "image-pull-secret"
 
+
 ## Set default image, imageTag, and imagePullPolicy for the `mc` (the minio
 ## client used to create a default bucket).
 mcImage:
@@ -23,14 +27,18 @@ mcImage:
   tag: RELEASE.2024-11-21T17-21-54Z
   pullPolicy: IfNotPresent
 
+
 ## minio mode, i.e. standalone or distributed
 mode: distributed ## other supported values are "standalone"
+
 
 ## Additional labels to include with deployment or statefulset
 additionalLabels: {}
 
+
 ## Additional annotations to include with deployment or statefulset
 additionalAnnotations: {}
+
 
 ## Typically the deployment/statefulset includes checksums of secrets/config,
 ## So that when these change on a subsequent helm install, the deployment/statefulset
@@ -38,28 +46,35 @@ additionalAnnotations: {}
 ## flux, so set to "true" to disable this behaviour.
 ignoreChartChecksums: false
 
+
 ## Additional arguments to pass to minio binary
 extraArgs: []
 # example for enabling FTP:
 #   - --ftp=\"address=:8021\"
 #   - --ftp=\"passive-port-range=10000-10010\"
 
+
 ## Additional volumes to minio container
 extraVolumes: []
+
 
 ## Additional volumeMounts to minio container
 extraVolumeMounts: []
 
+
 ## Additional sidecar containers
 extraContainers: []
+
 
 ## Internal port number for MinIO S3 API container
 ## Change service.port to change external port number
 minioAPIPort: "9000"
 
+
 ## Internal port number for MinIO Browser Console container
 ## Change consoleService.port to change external port number
 minioConsolePort: "9001"
+
 
 ## Update strategy for Deployments
 deploymentUpdate:
@@ -67,26 +82,28 @@ deploymentUpdate:
   maxUnavailable: 0
   maxSurge: "100%"
 
+
 ## Update strategy for StatefulSets
 statefulSetUpdate:
   updateStrategy: RollingUpdate
 
+
 ## Pod priority settings
 ## ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
-##
 priorityClassName: ""
+
 
 ## Pod runtime class name
 ## ref https://kubernetes.io/docs/concepts/containers/runtime-class/
-##
 runtimeClassName: ""
+
 
 ## Set default rootUser, rootPassword
 ## rootUser and rootPassword is generated when not set
 ## Distributed MinIO ref: https://min.io/docs/minio/linux/operations/install-deploy-manage/deploy-minio-multi-node-multi-drive.html
-##
 rootUser: "admin"
 rootPassword: "changeme"
+
 
 ## Use existing Secret that store following variables:
 ##
@@ -100,17 +117,19 @@ rootPassword: "changeme"
 ## others depend on enabled status of corresponding sections.
 existingSecret: ""
 
+
 ## Directory on the MinIO pof
 certsPath: "/etc/minio/certs/"
 configPathmc: "/etc/minio/mc/"
+
 
 ## Path where PV would be mounted on the MinIO Pod
 mountPath: "/export"
 ## Override the root directory which the minio server should serve from.
 ## If left empty, it defaults to the value of "\{\{ .Values.mountPath \}\}"
 ## If defined, it must be a sub-directory of the path specified in "\{\{ .Values.mountPath \}\}"
-##
 bucketRoot: ""
+
 
 # Number of drives attached to a node
 drivesPerNode: 1
@@ -118,6 +137,7 @@ drivesPerNode: 1
 replicas: "{{ _minio.replica|int }}"
 # Number of expanded MinIO clusters
 pools: 1
+
 
 ## TLS Settings for MinIO
 tls:
@@ -127,11 +147,13 @@ tls:
   publicCrt: "public.crt"
   privateKey: "private.key"
 
+
 ## Trusted Certificates Settings for MinIO. Ref: https://min.io/docs/minio/linux/operations/network-encryption.html#third-party-certificate-authorities
 ## Bundle multiple trusted certificates into one secret and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret
 ## When using self-signed certificates, remember to include MinIO's own certificate in the bundle with key public.crt.
 ## If certSecret is left empty and tls is enabled, this chart installs the public certificate from .Values.tls.certSecret.
 trustedCertsSecret: ""
+
 
 ## Enable persistence using Persistent Volume Claims
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
@@ -156,18 +178,17 @@ persistence:
   storageClass: "{{ _minio.storage_class }}"
   volumeName: ""
   accessMode: ReadWriteOnce
-  size: 8Gi
-  # size: 500Gi
+  size: 8Gi  # size: 500Gi
 
   ## If subPath is set mount a sub folder of a volume instead of the root of the volume.
   ## This is especially handy for volume plugins that don't natively support sub mounting (like glusterfs).
   ##
   subPath: ""
 
+
 ## Expose the MinIO service to be accessed from outside the cluster (LoadBalancer service).
 ## or access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.
 ## ref: http://kubernetes.io/docs/user-guide/services/
-##
 service:
   type: ClusterIP
   clusterIP: ~
@@ -186,12 +207,10 @@ service:
 
   ## service.externalTrafficPolicy minio service external traffic policy
   ## ref http://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
-  ##
   externalTrafficPolicy: Cluster
 
-## Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/
-##
 
+## Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
   enabled: false
   ingressClassName: ~
@@ -254,14 +273,15 @@ consoleIngress:
   #    hosts:
   #      - chart-example.local
 
+
 ## Node labels for pod assignment
 ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
-##
 nodeSelector: {}
 tolerations: []
 
 affinity: {}
 topologySpreadConstraints: []
+
 
 ## Add stateful containers to have security context, if enabled MinIO will run as this
 ## user and group NOTE: securityContext is only enabled if persistence.enabled=true
@@ -283,10 +303,10 @@ podLabels: {}
 
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
-##
 resources:
   requests:
     memory: 16Gi
+
 
 ## List of policies to be created after minio install
 ##
@@ -356,8 +376,8 @@ makePolicyJob:
   # Command to run after the main command on exit
   exitCommand: ""
 
+
 ## List of users to be created after minio install
-##
 users:
   ## Username, password and policy to be assigned to the user
   ## Default policies are [readonly|readwrite|writeonly|consoleAdmin|diagnostics]
@@ -376,6 +396,7 @@ users:
   #  existingSecretKey: password
   #  policy: readonly
 
+
 ## Additional Annotations for the Kubernetes Job makeUserJob
 makeUserJob:
   securityContext:
@@ -388,8 +409,8 @@ makeUserJob:
   # Command to run after the main command on exit
   exitCommand: ""
 
+
 ## List of service accounts to be created after minio install
-##
 svcaccts: []
   ## accessKey, secretKey and parent user to be assigned to the service accounts
   ## Add new service accounts as explained here https://min.io/docs/minio/kubernetes/upstream/administration/identity-access-management/minio-user-management.html#service-accounts
@@ -427,8 +448,8 @@ makeServiceAccountJob:
   # Command to run after the main command on exit
   exitCommand: ""
 
+
 ## List of buckets to be created after minio install
-##
 buckets: []
   #   # Name of the bucket
   # - name: bucket1
@@ -451,6 +472,7 @@ buckets: []
   #   # bucket [true|false] NOTE: versioning is enabled by default if you use locking
   #   objectlocking: false
 
+
 ## Additional Annotations for the Kubernetes Job makeBucketJob
 makeBucketJob:
   securityContext:
@@ -463,10 +485,12 @@ makeBucketJob:
   # Command to run after the main command on exit
   exitCommand: ""
 
+
 ## List of command to run after minio install
 ## NOTE: the mc command TARGET is always "myminio"
 customCommands:
   # - command: "admin policy attach myminio consoleAdmin --group='cn=ops,cn=groups,dc=example,dc=com'"
+
 
 ## Additional Annotations for the Kubernetes Job customCommandJob
 customCommandJob:
@@ -490,6 +514,7 @@ customCommandJob:
   # Command to run after the main command on exit
   exitCommand: ""
 
+
 ## Merge jobs
 postJob:
   podAnnotations: {}
@@ -503,6 +528,7 @@ postJob:
   tolerations: []
   affinity: {}
 
+
 ## Use this field to add environment variables relevant to MinIO server. These fields will be passed on to MinIO container(s)
 ## when Chart is deployed
 environment:
@@ -510,11 +536,12 @@ environment:
   ## MINIO_SUBNET_LICENSE: "License key obtained from https://subnet.min.io"
   ## MINIO_BROWSER: "off"
 
+
 ## The name of a secret in the same kubernetes namespace which contain secret values
 ## This can be useful for LDAP password, etc
 ## The key in the secret must be 'config.env'
-##
 extraSecret: ~
+
 
 ## OpenID Identity Management
 ## The following section documents environment variables for enabling external identity management using an OpenID Connect (OIDC)-compatible provider.
@@ -546,12 +573,13 @@ networkPolicy:
   egressEntities:
    - kube-apiserver
 
+
 ## PodDisruptionBudget settings
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
-##
 podDisruptionBudget:
   enabled: false
   maxUnavailable: 1
+
 
 ## Specify the service account to use for the MinIO pods. If 'create' is set to 'false'
 ## and 'name' is left unspecified, the account 'default' will be used.
@@ -581,6 +609,7 @@ metrics:
     # interval: ~
     # Scrape timeout, for example `scrapeTimeout: 10s`
     # scrapeTimeout: ~
+
 
 ## ETCD settings: https://github.com/minio/minio/blob/master/docs/sts/etcd.md
 ## Define endpoints to enable this section.
