@@ -21,12 +21,6 @@
   when: (( repo is defined and repo == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
-#- name: Install Kustomize
-#  import_tasks: install-kustomize.yml
-#  tags: setup, install
-#  when: (( kustomize is defined and kustomize == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
-
-
 - name: Copy Minio Template
   import_tasks: copy-minio-temp.yml
   tags: copy
@@ -48,7 +42,7 @@
 - name: Install Load Balancer
   import_tasks: install-lb.yml
   tags: setup, install
-  when: ( lb is defined and lb == true ) and inventory_hostname in groups['master']
+  when: (( lb is defined and lb == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Install NGINX Ingress
@@ -72,7 +66,7 @@
 - name: Uninstall Load Balancer
   import_tasks: uninstall-lb.yml
   tags: remove, uninstall
-  when: ( lb is defined and lb == true ) and inventory_hostname in groups['master']
+  when: (( lb is defined and lb == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Destroy Minio

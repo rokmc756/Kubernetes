@@ -104,3 +104,13 @@
   when:
     - _mc.client_admin_host in [ansible_default_ipv4.address, 'localhost', ansible_hostname, ansible_nodename, ansible_host]
 
+
+- name: Set MinIO Service Alias
+  become_user: "{{ _mc.user }}"
+  shell: |
+    {{ _mc.client_bin }} alias set {{ _mc.minio_svc_alias  }} {{ _mc.config_opts.hosts.minio.url }} {{ _mc.access_key }} {{ _mc.secret_key }}
+  register: set_minio_svc_alias
+  args:
+    creates: "{{ _mc.client_config }}"
+- debug: msg="{{ set_minio_svc_alias }}"
+

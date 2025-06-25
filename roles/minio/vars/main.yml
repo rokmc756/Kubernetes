@@ -1,14 +1,6 @@
 base_path: /root
 
 
-_kustomize:
-  install: true
-  download_url: "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
-  major_version: 5
-  minor_version: 4
-  patch_version: 2
-
-
 _minio:
   install: true
   major_version:
@@ -77,6 +69,7 @@ _mc:
   release_date: 20240307
   access_key: jomoon
   secret_key: changeme
+  minio_svc_alias: myminio
 
 
 total_minio_containers: "{{ _minio.replica|int }}"
