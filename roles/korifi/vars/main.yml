@@ -14,72 +14,76 @@ _kustomize:
 _go:
   download: true
   major_version: 1
-  minor_version: 23
-  patch_version: 5
+  minor_version: 24
+  patch_version: 4
 
 
+# 0.16.1
 _kpack:
   install: true
   major_version: 0
-  minor_version: 16
-  patch_version: 1
+  minor_version: 17
+  patch_version: 0
   download_url: "https://github.com/buildpacks-community/kpack/releases/download"
 
-
+# 1.30.2
 _contour:
   major_version: 1
-  minor_version: 30
-  patch_version: 2
+  minor_version: 32
+  patch_version: 0
   download_url: "https://raw.githubusercontent.com/projectcontour/contour"
 
-
+# 1.16.3
+# 1.18.1
+# 1.17.3
 _cm:
   major_version: 1
-  minor_version: 16
-  patch_version: 3
+  minor_version: 18
+  patch_version: 0
 
-
+# 0.7.2
 _metrics_server:
   major_version: 0
   minor_version: 7
   patch_version: 2
 
-
+# 1.0.0
 _servicebinding:
   major_version: 1
   minor_version: 0
   patch_version: 0
   download_url: "https://github.com/servicebinding/runtime/releases/download"
 
-
+# 0.26.0
 _kind:
   cli:
     download_url: "https://kind.sigs.k8s.io/dl/"
     major_version: 0
-    minor_version: 26
+    minor_version: 29
     patch_version: 0
 
-
+# 0.51.1
 _ytt:
   cli:
-    download_url: "https://github.com/vmware-tanzu/carvel-ytt/releases/download/"
+    # download_url: "https://github.com/vmware-tanzu/carvel-ytt/releases/download/"
+    download_url: "https://github.com/carvel-dev/ytt/releases/download/"
     major_version: 0
-    minor_version: 51
-    patch_version: 1
-
-
-_gateway_api:
-    major_version: 0
-    minor_version: 8
+    minor_version: 52
     patch_version: 0
 
+# 0.8.0
+_gateway_api:
+    major_version: 1
+    minor_version: 3
+    patch_version: 0
 
+# 0.14.0
 _korifi:
   download_url: "https://github.com/cloudfoundry/korifi/releases/download"
   storage_path: "/opt/korifi-storage"
   major_version: 0
-  minor_version: 14
-  patch_version: 0
+  minor_version: 15
+  patch_version: 1
   root_namespace: "cf"
   korifi_namespace: "korifi"
   namespace: "korifi-gateway"
@@ -88,7 +92,7 @@ _korifi:
   gateway_class_name: "contour"
   container_repo: "jproject01"
 
-
+# 7.9.0
 _bosh:
   environment: "192.168.1.221"
   director_name: bosh-1
@@ -97,22 +101,22 @@ _bosh:
     download_url: "https://github.com/cloudfoundry/bosh-cli/releases/download"
     major_version: 7
     minor_version: 9
-    patch_version: 0
+    patch_version: 7
   version: ""
   internal_cidr: "192.168.1.0/24"
   internal_gw: "192.168.1.1"
   internal_ip: "192.168.1.221"
   vm_network: "VM Network"
 
-
+# 8.9.0
 _cf:
   deploy_dir: "{{ base_path }}/cf-release"
   dns_recursor_ip: "8.8.8.8"
   cli:
     download_url: "https://github.com/cloudfoundry/cli/releases/download"
     major_version: 8
-    minor_version: 9
-    patch_version: 0
+    minor_version: 14
+    patch_version: 1
   zone:
     az1:
       name: "jaz001"
@@ -143,7 +147,7 @@ _cf:
 _app:
   version: ""
 
-
+#
 _stemcell:
   release_version: 1017
 
