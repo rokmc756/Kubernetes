@@ -72,3 +72,12 @@
     PATH: "{{ _directpv.base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
 - debug: msg={{ list_directpv_driver_formatted }}
 
+
+#- name: List DirectPV Volumes
+#  shell: |
+#    kubectl directpv list volumes
+#  register: list_directpv_volumes
+#  environment:
+#    PATH: "{{ _directpv.base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+#- debug: msg={{ list_directpv_volumes }}
+
