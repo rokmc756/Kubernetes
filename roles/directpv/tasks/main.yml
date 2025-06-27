@@ -6,7 +6,7 @@
 
 - name: Set facts for DirectPV
   import_tasks: set-directpv-facts.yml
-  tags: install, uninstall, apply, deploy, destroy, create, delete, setup, remove, enable, disable, copy
+  tags: testfact, install, uninstall, apply, deploy, destroy, create, delete, setup, remove, enable, disable, copy, clean
 
 
 - name: Install Krew
@@ -19,4 +19,16 @@
   import_tasks: install-directpv.yml
   tags: setup, install
   when: (( bin is defined and bin == true ) or ( directpv_all is defined and directpv_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Uninstall DirectPV
+  import_tasks: uninstall-directpv.yml
+  tags: remove, uninstall
+  when: ( bin is defined and bin == true ) or ( directpv_all is defined and directpv_all == true )
+
+
+- name: Uninstall Krew
+  import_tasks: uninstall-krew.yml
+  tags: remove, uninstall
+  when: (( krew is defined and krew == true ) or ( directpv_all is defined and directpv_all == true )) and inventory_hostname in groups['master']
 

@@ -1,1 +1,3 @@
-- debug: msg={{ "Need to check if set_facts is needed" }}
+---
+- import_tasks: ext/check-nvme-list.yml
+

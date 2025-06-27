@@ -4,8 +4,10 @@
     kubectl directpv uninstall
   register: uninstall_directpv_driver
   environment:
-    PATH: "{{ base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
-- debug: msg={{ install_directpv_driver }}
+    PATH: "{{ _directpv.base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+  when: inventory_hostname in groups['master']
+- debug: msg={{ uninstall_directpv_driver }}
+  when: inventory_hostname in groups['master']
 
 
 - name: Uninstall DirectPV
@@ -13,7 +15,22 @@
     kubectl krew uninstall directpv
   register: uninstall_directpv
   environment:
-    PATH: "{{ base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+    PATH: "{{ _directpv.base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+  when: inventory_hostname in groups['master']
 - debug: msg={{ uninstall_directpv }}
+  when: inventory_hostname in groups['master']
 
+
+- name: Delete Drives Config
+  file:
+    path: "{{ _directpv.base_path }}/drives.yaml"
+    state: absent
+  register: delete_drives_config
+  when: inventory_hostname in groups['master']
+- debug: msg={{ delete_drives_config }}
+  when: inventory_hostname in groups['master']
+
+
+- import_tasks: ext/cleanup-nvme-devices.yml
+  when: inventory_hostname in groups['workers']
 

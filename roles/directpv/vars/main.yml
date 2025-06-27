@@ -1,7 +1,6 @@
 ---
-base_path: "/root"
-
 _krew:
+  base_path: "/root"
   download_url: "https://github.com/kubernetes-sigs/krew/releases/latest/download"
   major_version:
   minor_version:
@@ -9,6 +8,7 @@ _krew:
 
 
 _directpv:
+  base_path: "/root"
   download_url: "https://github.com/minio/directpv/releases/download"
   major_version: 4
   minor_version: 1
