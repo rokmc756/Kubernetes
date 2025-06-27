@@ -1,0 +1,19 @@
+---
+- name: Uninstall DirectPV Driver
+  shell: |
+    kubectl directpv uninstall
+  register: uninstall_directpv_driver
+  environment:
+    PATH: "{{ base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ install_directpv_driver }}
+
+
+- name: Uninstall DirectPV
+  shell: |
+    kubectl krew uninstall directpv
+  register: uninstall_directpv
+  environment:
+    PATH: "{{ base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ uninstall_directpv }}
+
+

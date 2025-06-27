@@ -1,0 +1,75 @@
+# https://krew.sigs.k8s.io/docs/user-guide/setup/install/
+
+#(
+#  set -x; cd "$(mktemp -d)" &&
+#  OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+#  ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+#  KREW="krew-${OS}_${ARCH}" &&
+#  curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
+#  tar zxvf "${KREW}.tar.gz" &&
+#  ./"${KREW}" install krew
+#)`
+
+
+- name: Get OS
+  shell:
+    uname | tr '[:upper:]' '[:lower:]'
+  register: get_os
+
+
+- name: Get Arch
+  shell:
+    uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/'
+  register: get_arch
+
+
+- name: Set Facts
+  set_fact:
+    _os: "{{ get_os.stdout }}"
+    _arch: "{{ get_arch.stdout }}"
+
+
+- name: Set Facts
+  set_fact:
+    _krew: "krew-{{ _os }}_{{ _arch }}"
+
+- debug: msg={{ _os }}
+- debug: msg={{ _arch }}
+- debug: msg={{ _krew }}
+
+
+- name: Download Krew
+  get_url:
+    url: "https://github.com/kubernetes-sigs/krew/releases/latest/download/{{ _krew }}.tar.gz"
+    dest: /root
+
+
+- name: Unarchive Krew
+  unarchive:
+    src: "/root/{{ _krew }}.tar.gz"
+    dest: /root/
+    remote_src: yes
+
+
+- name: Install Krew
+  shell: |
+    /root/{{ _krew }} install krew
+  register: install_krew
+
+
+- name: Insert Executable Binary Path into .bashrc for Krew
+  lineinfile:
+    path: "{{ item }}"
+    line: "export PATH=$HOME/.krew/bin:/usr/local/bin:$PATH"
+  with_items:
+    - "{{ base_path }}/.bashrc"
+
+
+- name: Update Krew
+  shell: |
+    kubectl krew update
+  environment:
+    PATH: "{{ base_path }}/.krew/bin:{{ ansible_env.PATH }}"
+  register: update_krew
+
+

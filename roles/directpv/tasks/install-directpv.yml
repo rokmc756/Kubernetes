@@ -1,0 +1,66 @@
+## Download DirectPV plugin.
+# https://min.io/docs/directpv/installation/
+
+- name: Install DirectPV
+  shell: |
+    kubectl krew install directpv
+  register: install_directpv
+  environment:
+    PATH: "{{ base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ install_directpv }}
+
+
+- name: Verify DirectPV
+  shell: |
+    kubectl directpv --version
+  register: verify_directpv
+  environment:
+    PATH: "{{ base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ install_directpv }}
+
+
+- name: Install DirectPV Driver
+  shell: |
+    kubectl directpv install
+  register: install_directpv_driver
+  environment:
+    PATH: "{{ base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ install_directpv_driver }}
+
+
+- name: List DirectPV Driver
+  shell: |
+    kubectl directpv discover --drives nvme0n{1...9}
+  register: list_directpv_driver
+  environment:
+    PATH: "{{ base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ list_directpv_driver }}
+
+
+- name: Initialize DirectPV Driver
+  shell: |
+    kubectl directpv init --dangerous drives.yaml
+  register: init_directpv_driver
+  environment:
+    PATH: "{{ base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ init_directpv_driver }}
+
+
+- name: Verify DirectPV Driver
+  shell: |
+    kubectl directpv info
+  register: verify_directpv_driver
+  environment:
+    PATH: "{{ base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ verify_directpv_driver }}
+
+
+- name: List DirectPV Driver Formatted
+  shell: |
+    kubectl directpv list drives
+  register: list_directpv_driver_formatted
+  environment:
+    PATH: "{{ base_path }}/.krew/bin:/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ list_directpv_driver_formatted }}
+
+

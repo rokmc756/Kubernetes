@@ -1,0 +1,22 @@
+---
+- name: Check OS ( DirectPv )
+  fail: msg="Not a Red Hat or SUSE based System!"
+  when: ansible_os_family != 'RedHat' or  ansible_os_family != 'CentOS' or  ansible_os_family != 'Rocky' or ansible_os_family != 'openSUSE Leap'
+
+
+- name: Set facts for DirectPV
+  import_tasks: set-directpv-facts.yml
+  tags: install, uninstall, apply, deploy, destroy, create, delete, setup, remove, enable, disable, copy
+
+
+- name: Install Krew
+  import_tasks: install-krew.yml
+  tags: setup, install
+  when: (( krew is defined and krew == true ) or ( directpv_all is defined and directpv_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Install DirectPV
+  import_tasks: install-directpv.yml
+  tags: setup, install
+  when: (( bin is defined and bin == true ) or ( directpv_all is defined and directpv_all == true )) and inventory_hostname in groups['master']
+
