@@ -60,8 +60,8 @@
   register: delete_cluster_local_pvc_config_yaml
   ignore_errors: true
   with_items:
-    - "local-storage-class.yaml"
-    - "local-storage-pv.yaml"
+    # - "local-storage-class.yaml"
+    # - "local-storage-pv.yaml"
     - "local-storage-pvc.yaml"
 - debug: msg={{ delete_cluster_local_pvc_config_yaml }}
   ignore_errors: true
