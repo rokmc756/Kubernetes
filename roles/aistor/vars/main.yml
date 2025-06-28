@@ -1,0 +1,102 @@
+---
+base_path: /root
+
+
+_krew:
+  base_path: "/root"
+  download_url: "https://github.com/kubernetes-sigs/krew/releases/latest/download"
+  major_version:
+  minor_version:
+  patch_version:
+
+
+_directpv:
+  base_path: "/root"
+  download_url: "https://github.com/minio/directpv/releases/download"
+  major_version: 4
+  minor_version: 1
+  patch_version: 5
+
+
+_minio:
+  install: true
+  major_version:
+  minor_version:
+  patch_version:
+  build_version:
+  admin_user: "admin"
+  admin_password: "changeme"
+  admin_email: "rokmc756@gmail.com"
+  clone_git: true
+  nvme: true
+  namespace: minio
+  storage_class: "directpv-min-io"
+  k8s:
+    major_version: 1
+    minor_version: 28
+    patch_version: 0
+    build_version:
+  hostname: "minio0.jtest.pivotal.io"
+  service:
+    metadata:
+      name: minio-loadbalancer
+      namespace: minio
+  ingress:
+    metadata:
+      name: minio-ingress
+      namespace: minio
+    hostname: "minio0.jtest.pivotal.io"
+  kernel_parameters:
+    - "net.ipv4.neigh.default.gc_thresh1 = 0"   # For ARP Cache
+    - "fs.inotify.max_user_instances=2280"
+    - "fs.inotify.max_user_watches=755360"
+  root_user: admin
+  root_pass: changeme
+  access_key: jomoon
+  secret_key: changeme
+  minio_svc_alias: myminio
+  lb:
+    install: true
+    ip_addr: 192.168.1.219
+  replica: 12
+
+
+_nginx:
+  ingress:
+    install: true
+    name: nginx-ingress
+    class_name: minio-ingress-class
+    namespace: "nginx-ingress"
+    major_version:
+    minor_version:
+    patch_version:
+    replica: 1
+    hostname: minio0
+    domain: jtest.pivotal.io
+    service: minio-console
+    ip_addr: "192.168.1.229"
+    port: 9001
+  k8s_ingress:
+    major_version: 3
+    minor_version: 0
+    patch_version: 2
+
+
+_helm:
+  enable_repo: true
+  major_version: 3
+  minor_version:
+  patch_version:
+  build_version:
+
+
+_ssl:
+  dir: "{{ base_path }}/minio-certs"
+  days: 3660
+  country: "KR"
+  state: "Seoul"
+  location: "Guro"
+  organization: "Pivotal"
+  common_name: "jest.pivotal.io"
+  email: "rokmc756@gmail.com"
+

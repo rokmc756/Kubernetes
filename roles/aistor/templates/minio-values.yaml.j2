@@ -1,0 +1,36 @@
+mode: distributed
+replicas: {{ _minio.replica|int }}
+
+users:
+  - accessKey: {{ _minio.access_key }}
+    secretKey: {{ _minio.secret_key }}
+    policy: consoleAdmin
+  #- accessKey: externalSecret
+  #  existingSecret: my-secret
+  #  existingSecretKey: password
+  #  policy: readonly
+
+persistence:
+  enabled: true
+  existingClaim: ""  # Let DirectPV dynamically bind the PVs
+  storageClass: directpv-min-io # Ensure it matches the StorageClass used by DirectPV
+  size: 10Gi  # Not strictly needed for DirectPV, but Helm chart requires it
+
+resources:
+  requests:
+    memory: 2Gi
+    cpu: 1
+
+environment:
+  MINIO_STORAGE_CLASS: {{ _minio.storage_class }}
+
+tls:
+  enabled: false
+
+consoleIngress:
+  enabled: false
+
+
+rootUser: "{{ _minio.root_user }}"
+rootPassword: "{{ _minio.root_pass }}"
+

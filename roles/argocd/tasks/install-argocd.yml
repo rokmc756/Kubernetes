@@ -33,8 +33,8 @@
     dest: "{{ base_path }}/{{ item }}"
   register: copy_cluster_local_pvc_config_yaml
   with_items:
-    - "argocd-storage-class.yaml"
-    - "argocd-storage-pv.yaml"
+    # - "argocd-storage-class.yaml"
+    # - "argocd-storage-pv.yaml"
     - "argocd-storage-pvc.yaml"
 - debug: msg={{ copy_cluster_local_pvc_config_yaml }}
 
@@ -44,8 +44,8 @@
     kubectl create -f {{ item }}
   register: create_pvc
   with_items:
-    - "argocd-storage-class.yaml"
-    - "argocd-storage-pv.yaml"
+    # - "argocd-storage-class.yaml"
+    # - "argocd-storage-pv.yaml"
     - "argocd-storage-pvc.yaml"
   args:
     chdir: "{{ base_path }}/"
@@ -55,19 +55,19 @@
   when: print_debug == true
 
 
-#- name: Copy ArgoCD Loadbalancer Config Yaml
-#  template:
-#    src: "{{ item }}.j2"
-#    dest: "{{ base_path }}/{{ item }}"
-#  register: copy_argocd_lb_config_yaml
-#  with_items:
-#    - "argocd-values.yaml"
-#- debug: msg={{ copy_argocd_lb_config_yaml }}
+- name: Copy ArgoCD Config Yaml
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_argocd_lb_config_yaml
+  with_items:
+    - "argocd-values.yaml"
+- debug: msg={{ copy_argocd_lb_config_yaml }}
 
 
 - name: Deploy ArgoCD
   shell:
-    helm install argocd argo/argo-cd -n {{ _argocd.namespace }}
+    helm install argocd argo/argo-cd -n {{ _argocd.namespace }} -f argocd-values.yaml
   register: deploy_argocd
   args:
     chdir: "{{ base_path }}/"
@@ -75,7 +75,7 @@
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
 - debug: msg={{ deploy_argocd }}
   when: print_debug == true
-  #  helm install argocd argo/argo-cd -n {{ _argocd.namespace }} -f argocd-values.yaml
+  # helm install argocd argo/argo-cd -n {{ _argocd.namespace }}
 
 
 - name: Validate if ArgoCD Containers are Running Normally

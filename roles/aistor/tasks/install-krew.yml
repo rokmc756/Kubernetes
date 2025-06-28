@@ -1,0 +1,47 @@
+# https://krew.sigs.k8s.io/docs/user-guide/setup/install/
+#
+- name: Set Facts
+  set_fact:
+    _os: "{{ ansible_system | lower }}"
+    _arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+
+
+- name: Set Facts
+  set_fact:
+    _krew_fn: "krew-{{ _os }}_{{ _arch }}"
+
+
+- name: Download Krew
+  get_url:
+    url: "https://github.com/kubernetes-sigs/krew/releases/latest/download/{{ _krew_fn }}.tar.gz"
+    dest: "{{ _krew.base_path }}"
+
+
+- name: Unarchive Krew
+  unarchive:
+    src: "{{ _krew.base_path }}/{{ _krew_fn }}.tar.gz"
+    dest: "{{ _krew.base_path }}"
+    remote_src: yes
+
+
+- name: Install Krew
+  shell: |
+    {{ _krew.base_path }}/{{ _krew_fn }} install krew
+  register: install_krew
+
+
+- name: Insert Executable Binary Path into .bashrc for Krew
+  lineinfile:
+    path: "{{ item }}"
+    line: "export PATH=$HOME/.krew/bin:/usr/local/bin:$PATH"
+  with_items:
+    - "{{ _krew.base_path }}/.bashrc"
+
+
+- name: Update Krew
+  shell: |
+    kubectl krew update
+  environment:
+    PATH: "{{ _krew.base_path }}/.krew/bin:{{ ansible_env.PATH }}"
+  register: update_krew
+

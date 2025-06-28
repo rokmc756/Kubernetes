@@ -8,7 +8,8 @@ _argocd:
   patch_version: 0
   build_version:
   namespace: argocd
-  storage_class: "argocd-storage"
+  # storage_class: "argocd-storage"
+  storage_class: "directpv-min-io"     # For DirectPV
   storage_path: "/opt/argocd-storage"
   replica: 3
   db:
@@ -23,6 +24,7 @@ _argocd:
     patch_version: 0
     build_version:
   hostname: "argocd.jtest.pivotal.io"
+  domain: "argocd.jtest.pivotal.io"
   service:
     metadata:
       name: argocd-loadbalancer
@@ -37,6 +39,14 @@ _argocd:
   lb:
     install: true
     ip_addr: "192.168.1.219"
+  server:
+    replicas: 3
+  controller:
+    replicas: 3
+  application:
+    replicas: 3
+  repo_server:
+    replicas: 3
 
 
 _helm:

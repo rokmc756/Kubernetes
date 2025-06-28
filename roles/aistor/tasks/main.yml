@@ -1,0 +1,70 @@
+---
+- name: Check OS ( DirectPv )
+  fail: msg="Not a Red Hat or SUSE based System!"
+  when: ansible_os_family != 'RedHat' or  ansible_os_family != 'CentOS' or  ansible_os_family != 'Rocky' or ansible_os_family != 'openSUSE Leap'
+
+
+- name: Set facts for DirectPV
+  import_tasks: set-directpv-facts.yml
+  tags: testfact, install, uninstall, apply, deploy, destroy, create, delete, setup, remove, enable, disable, copy, clean
+
+
+- name: Install Krew
+  import_tasks: install-krew.yml
+  tags: setup, install
+  when: (( krew is defined and krew == true ) or ( directpv_all is defined and directpv_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Install DirectPV
+  import_tasks: install-directpv.yml
+  tags: setup, install
+  when: (( bin is defined and bin == true ) or ( directpv_all is defined and directpv_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Deploy Minio
+  import_tasks: install-minio.yml
+  tags: setup, install
+  when: (( minio is defined and minio == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Install Load Balancer
+  import_tasks: install-lb.yml
+  tags: setup, install
+  when: (( lb is defined and lb == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Install NGINX Ingress
+  import_tasks: install-ingress.yml
+  tags: setup, install
+  when: (( ingress is defined and ingress == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Unstall NGINX Ingress
+  import_tasks: uninstall-ingress.yml
+  tags: remove, uninstall
+  when: (( ingress is defined and ingress == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Uninstall Load Balancer
+  import_tasks: uninstall-lb.yml
+  tags: remove, uninstall
+  when: (( lb is defined and lb == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Destroy Minio
+  import_tasks: uninstall-minio.yml
+  tags: destroy, uninstall
+  when: (( minio is defined and minio == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Uninstall DirectPV
+  import_tasks: uninstall-directpv.yml
+  tags: remove, uninstall
+  when: ( bin is defined and bin == true ) or ( directpv_all is defined and directpv_all == true )
+
+
+- name: Uninstall Krew
+  import_tasks: uninstall-krew.yml
+  tags: remove, uninstall
+  when: (( krew is defined and krew == true ) or ( directpv_all is defined and directpv_all == true )) and inventory_hostname in groups['master']
+

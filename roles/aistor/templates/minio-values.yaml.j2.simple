@@ -1,0 +1,23 @@
+mode: distributed
+replicas: {{ _minio.replica|int }}
+
+persistence:
+  enabled: true
+  existingClaim: ""  # Let DirectPV dynamically bind the PVs
+  storageClass: directpv-min-io # Ensure it matches the StorageClass used by DirectPV
+  size: 10Gi  # Not strictly needed for DirectPV, but Helm chart requires it
+
+resources:
+  requests:
+    memory: 2Gi
+    cpu: 1
+
+environment:
+  MINIO_STORAGE_CLASS: directpv-min-io
+
+tls:
+  enabled: false
+
+consoleIngress:
+  enabled: false
+

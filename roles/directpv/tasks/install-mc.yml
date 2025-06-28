@@ -1,0 +1,116 @@
+---
+- name: Check if MinIO Client Binary Already Exists
+  stat: path={{ _mc.client_bin }}
+  register: mc_bin_exists
+
+
+- name: Copy MinIO Client Binary from local Directory, roles/minio/files
+  copy: src=mc-{{ _mc.release_date }}.tar.gz dest=/tmp/mc-{{ _mc.release_date }}.tar.gz mode=0644 owner=root group=root
+  register: mc_local_copy
+  when: mc_bin_exists.stat.exists == false and minio.download == false
+
+
+- name: Unarchive MinIO Client gzip File
+  unarchive:
+    src: "/tmp/mc-{{ _mc.release_date }}.tar.gz"
+    dest: "/usr/local/bin"
+    owner: "root"
+    group: "root"
+    mode: "0755"
+    remote_src: yes
+  register: mc_unarchive
+  when: mc_bin_exists.stat.exists == false and minio.download == false
+
+
+- name: Download MinIo Client
+  get_url:
+    url: "{{ _mc.client_url }}"
+    dest: "{{ _mc.client_bin }}"
+    checksum: "{{ _mc.client_checksum | d(omit) }}"
+    mode: 0755
+    timeout: 20
+  when: ( _mc.client_url.endswith('mc') or _mc.client_url.endswith('Z') ) and ( mc_bin_exists.stat.exists == false and _mc.download == true )
+
+
+- name: Install Unzip
+  yum: name=unzip
+  when: _mc.client_url.endswith('zip') and ( mc_bin_exists.stat.exists == false and _mc.download == false )
+
+
+- name: Unarchive MinIO Client
+  unarchive:
+    src: "{{ _mc.client_url }}"
+    dest: "{{ _mc.client_bin | dirname }}"
+    remote_src: "{{ _mc.client_url.startswith('http') }}"
+    mode: 0755
+  when: _mc.client_url.endswith('zip') and ( mc_bin_exists.stat.exists == false and _mc.download == false )
+
+
+- name: Install Sudo
+  yum: name=sudo
+  when: _mc.user != 'root'
+
+
+- name: Fix Ownership for /{{ _mc.user }}
+  file: path={{ _mc.user_home }}/.ansible/tmp state=directory mode=0700 owner={{ _mc.user }} group={{ _mc.user }}
+
+
+- name: Add MinIO Server to Client Config
+  become_user: "{{ _mc.user }}"
+  shell: |
+    {{ _mc.client_bin }} --insecure config host add minio {{ _mc.config_opts.hosts.minio.url }} {{ _mc.access_key }} {{ _mc.secret_key }}
+  register: add_minio_server
+  # ignore_errors: true
+  args:
+    creates: "{{ _mc.client_config }}"
+- debug: msg="{{ add_minio_server }}"
+
+
+- block:
+    - name: Create MinIO Admin Service
+      copy:
+        content: |
+          [Unit]
+          Description=Check minio {{ _mc.service }} heal
+          [Service]
+          WorkingDirectory={{ _mc.user_home }}
+          User={{ _mc.user }}
+          Type=oneshot
+          ExecStart={{ _mc.client_bin }} admin heal -r minio
+        dest: /usr/lib/systemd/system/{{ _mc.service }}-check.service
+      notify: systemd daemon-reload
+
+    - name: Create Timer for MinIO Admin Service
+      copy:
+        content: |
+          [Unit]
+          Description=Run minio {{ _mc.service }} heal check
+          [Timer]
+          OnCalendar={{ _mc.check_calendar | d('weekly') }}
+        dest: /usr/lib/systemd/system/{{ _mc.service }}-check.timer
+
+    - name: Start MinIO Admin Service Timer
+      systemd: name={{ _mc.service }}-check.timer state=started enabled=yes daemon_reload=yes
+
+    - name: Check Cluster Status
+      become: yes
+      become_user: "{{ _mc.user }}"
+      command: "{{ _mc.client_bin }} admin info minio --json"
+      changed_when: no
+      register: info
+      until: "(info.stdout_lines | map('from_json') | map(attribute='storage.backend.offlineDisks') | sum) == 0"
+      retries: 5
+      delay: 10
+  when:
+    - _mc.client_admin_host in [ansible_default_ipv4.address, 'localhost', ansible_hostname, ansible_nodename, ansible_host]
+
+
+- name: Set MinIO Service Alias
+  become_user: "{{ _mc.user }}"
+  shell: |
+    {{ _mc.client_bin }} alias set {{ _mc.minio_svc_alias  }} {{ _mc.config_opts.hosts.minio.url }} {{ _mc.access_key }} {{ _mc.secret_key }}
+  register: set_minio_svc_alias
+  args:
+    creates: "{{ _mc.client_config }}"
+- debug: msg="{{ set_minio_svc_alias }}"
+

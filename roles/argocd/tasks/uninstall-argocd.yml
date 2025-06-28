@@ -35,8 +35,8 @@
   ignore_errors: true
   with_items:
     - "argocd-storage-pvc.yaml"
-    - "argocd-storage-pv.yaml"
-    - "argocd-storage-class.yaml"
+    # - "argocd-storage-pv.yaml"
+    # - "argocd-storage-class.yaml"
   args:
     chdir: "{{ base_path }}/"
   environment:
@@ -52,8 +52,8 @@
   register: delete_cluster_local_pvc_config_yaml
   ignore_errors: true
   with_items:
-    - "argocd-storage-class.yaml"
-    - "argocd-storage-pv.yaml"
+    # - "argocd-storage-class.yaml"
+    # - "argocd-storage-pv.yaml"
     - "argocd-storage-pvc.yaml"
 - debug: msg={{ delete_cluster_local_pvc_config_yaml }}
   when: print_debug == true

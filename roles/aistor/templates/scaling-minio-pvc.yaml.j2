@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: export-minio-12
+  namespace: minio
+spec:
+  volumeMode: Filesystem
+  storageClassName: directpv-min-io
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
+      storage: 10Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: export-minio-13
+  namespace: minio
+spec:
+  volumeMode: Filesystem
+  storageClassName: directpv-min-io
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
+      storage: 10Mi

@@ -4,7 +4,7 @@
   when: ansible_os_family != 'RedHat' or ansible_os_family != 'CentOS' or ansible_os_family != 'Rocky'
 
 
-- name: Set Facts for argocd
+- name: Set Facts for ArgoCD
   import_tasks: set-argocd-facts.yml
   tags:
     - install

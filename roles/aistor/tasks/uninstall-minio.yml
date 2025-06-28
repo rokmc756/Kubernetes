@@ -1,0 +1,43 @@
+---
+- name: Uninstall MinIO
+  shell: |
+    /usr/local/bin/helm uninstall minio -n {{ _minio.namespace }}
+  register: uninstall_minio
+  ignore_errors: true
+- debug: msg={{ uninstall_minio }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Validate if MinIO Controller Containers are Deleted
+  shell: |
+    kubectl get pods -n {{ _minio.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep -E "Running|Terminating" | wc -l
+  register: check_minio_containers
+  until: check_minio_containers.stdout|int == 0
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "minio-", replica: "{{ _minio.replica }}" }
+- debug: msg={{ check_minio_containers }}
+  when: print_debug == true
+
+
+- name: Delete Namespace
+  shell: |
+    kubectl delete namespace {{ _minio.namespace }}
+  register: delete_namespace
+  ignore_errors: true
+- debug: msg={{ delete_namespace }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete MinIO Helm Config
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_minio_helm_config
+  with_items:
+    - "minio-values.yaml"
+- debug: msg={{ delete_minio_helm_config }}
+
