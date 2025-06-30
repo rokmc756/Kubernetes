@@ -1,8 +1,22 @@
 base_path: /root
 
+_krew:
+  base_path: "/root"
+  download_url: "https://github.com/kubernetes-sigs/krew/releases/latest/download"
+  major_version:
+  minor_version:
+  patch_version:
+
+_directpv:
+  base_path: "/root"
+  download_url: "https://github.com/minio/directpv/releases/download"
+  major_version: 4
+  minor_version: 1
+  patch_version: 5
 
 _minio:
   install: true
+  directpv: true
   major_version:
   minor_version:
   patch_version:
@@ -15,7 +29,8 @@ _minio:
   nvme: true
   namespace: minio
   storage_path: "/opt/minio-storage"
-  storage_class: "minio-storage"
+  # storage_class: "minio-storage"
+  storage_class: "directpv-min-io"
   k8s:
     major_version: 1
     minor_version: 28
@@ -38,7 +53,10 @@ _minio:
   lb:
     install: true
     ip_addr: 192.168.1.219
-  replica: 4
+  replica: 16
+
+
+total_minio_containers: "{{ _minio.replica|int }}"
 
 
 _mc:
@@ -70,9 +88,6 @@ _mc:
   access_key: jomoon
   secret_key: changeme
   minio_svc_alias: myminio
-
-
-total_minio_containers: "{{ _minio.replica|int }}"
 
 
 _nginx:

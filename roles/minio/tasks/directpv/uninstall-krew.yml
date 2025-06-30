@@ -1,0 +1,30 @@
+---
+- name: Set Facts
+  set_fact:
+    _os: "{{ ansible_system | lower }}"
+    _arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+
+
+- name: Set Facts
+  set_fact:
+    _krew_fn: "krew-{{ _os }}_{{ _arch }}"
+
+
+- name: Delete Krew
+  file:
+    path: "{{ _krew.base_path }}/{{ item }}"
+    state: absent
+  with_items:
+    - "{{ _krew_fn }}.tar.gz"
+    - "{{ _krew_fn }}"
+    - ".krew"
+
+
+- name: Remove PATH export Line for Current User
+  lineinfile:
+    path: '{{ item }}'
+    regexp: '^export PATH=\$HOME/\.krew/bin(.*)$'
+    state: absent
+  with_items:
+    - "{{ _krew.base_path }}/.bashrc"
+

@@ -1,0 +1,54 @@
+---
+- name: Get Mounted NVME Devices
+  shell: |
+    lsblk -nr -o MOUNTPOINT /dev/nvme0n* | grep -v '^$' | sort -u
+  register: nvme_mounts
+  changed_when: false
+
+
+- name: Unmount All NVME Mount Points
+  mount:
+    path: "{{ item }}"
+    state: unmounted
+  loop: "{{ nvme_mounts.stdout_lines }}"
+
+
+- name: Purge Block Devices
+  shell: |
+    dd if=/dev/zero of={{ item }} bs=4096 count=1 conv=notrunc
+  register: purge_block_devices
+  ignore_errors: true
+  with_items: "{{ nvme_device_array }}"
+- debug: msg={{ purge_block_devices }}
+  when: print_debug == true
+
+
+- name: Wipe Filesystem in NVME Devices
+  shell: |
+    wipefs -a {{ item }}
+  register: wipefs_nvme_devices
+  ignore_errors: true
+  with_items: "{{ nvme_device_array }}"
+- debug: msg={{ wipefs_nvme_devices }}
+  when: print_debug == true
+
+
+- name: Delete Zap in NVME Devices
+  shell: |
+    sgdisk --zap-all --delete {{ item }}
+  register: delete_zap_nvme_devices
+  ignore_errors: true
+  with_items: "{{ nvme_device_array }}"
+- debug: msg={{ delete_zap_nvme_devices }}
+  when: print_debug == true
+
+
+- name: Discard Block ID
+  shell: |
+    blkdiscard {{ item }}
+  register: discard_block_id
+  ignore_errors: true
+  with_items: "{{ nvme_device_array }}"
+- debug: msg={{ discard_block_id }}
+  when: print_debug == true
+

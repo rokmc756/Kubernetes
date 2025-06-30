@@ -1,0 +1,7 @@
+# https://min.io/docs/directpv/installation
+
+kubectl directpv install
+kubectl directpv discover
+kubectl directpv init drives.yaml
+kubectl directpv info
+

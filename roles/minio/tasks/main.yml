@@ -9,6 +9,18 @@
   tags: install, uninstall, apply, deploy, destroy, create, delete, setup, remove, enable, disable, copy
 
 
+- name: Install Krew to Setup DirectPV
+  import_tasks: directpv/install-krew.yml
+  tags: setup, install
+  when: ( directpv is defined and directpv == true and _minio.directpv == true ) and inventory_hostname in groups['master']
+
+
+- name: Install DirectPV
+  import_tasks: directpv/install-directpv.yml
+  tags: setup, install
+  when: ( directpv is defined and directpv == true and _minio.directpv == true ) and inventory_hostname in groups['master']
+
+
 - name: Apply Kernel Parameters
   import_tasks: apply-minio-kernel-parameters.yml
   tags: apply, install
@@ -85,4 +97,16 @@
   import_tasks: remove-minio-kernel-parameters.yml
   tags: remove, delete, uninstall
   when: ( param is defined and param == true ) or ( minio_all is defined and minio_all == true )
+
+
+- name: Uninstall DirectPV
+  import_tasks: directpv/uninstall-directpv.yml
+  tags: remove, uninstall
+  when: ( directpv is defined and directpv == true and _minio.directpv == true )
+
+
+- name: Uninstall Krew
+  import_tasks: directpv/uninstall-krew.yml
+  tags: remove, uninstall
+  when: ( directpv is defined and directpv == true and _minio.directpv == true ) and inventory_hostname in groups['master']
 

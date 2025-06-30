@@ -3,36 +3,12 @@
   shell: |
     kubectl create namespace {{ _minio.namespace }}
   register: create_namespace
-  #with_items:
-  #  - minio
 - debug: msg={{ create_namespace }}
   when: print_debug == true
 
 
-- name: Copy Cluster Local PVC Config Yaml
-  template:
-    src: "{{ item }}.j2"
-    dest: "{{ base_path }}/{{ item }}"
-  register: copy_cluster_local_pvc_config_yaml
-  with_items:
-    - "local-storage-class.yaml"
-    - "local-storage-pv.yaml"
-    - "local-storage-pvc.yaml"
-- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
-
-
-- name: Create Persistent Volumes
-  shell: |
-    kubectl create -f {{ item }}
-  register: create_pvc
-  with_items:
-    - "local-storage-class.yaml"
-    - "local-storage-pv.yaml"
-    - "local-storage-pvc.yaml"
-  args:
-    chdir: "{{ base_path }}/"
-- debug: msg={{ create_pvc }}
-  when: print_debug == true
+- import_tasks: create-local-pv.yml
+  when: _minio.directpv == false
 
 
 - name: Copy MinIO Helm Config

@@ -8,8 +8,9 @@
     mode: 0777
   register: create_pv_dir
   with_sequence: start=0 end={{ total_minio_containers|int }}
+  when: _minio.directpv == false
 - debug: msg={{ create_pv_dir }}
-  when: print_debug == true
+  when: print_debug == true and _minio.directpv == false
 
 
 - name: Apply Kernel Parameters

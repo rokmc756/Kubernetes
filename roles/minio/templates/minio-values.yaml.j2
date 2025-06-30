@@ -175,10 +175,10 @@ persistence:
   ##
   ## Storage class of PV to bind. By default it looks for standard storage class.
   ## If the PV uses a different storage class, specify that here.
-  storageClass: "{{ _minio.storage_class }}"
+  storageClass: {{ _minio.storage_class }}
   volumeName: ""
   accessMode: ReadWriteOnce
-  size: 8Gi  # size: 500Gi
+  size: 10Gi  # size: 500Gi
 
   ## If subPath is set mount a sub folder of a volume instead of the root of the volume.
   ## This is especially handy for volume plugins that don't natively support sub mounting (like glusterfs).
@@ -305,7 +305,9 @@ podLabels: {}
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 resources:
   requests:
-    memory: 16Gi
+    # memory: 16Gi -- memory allocation failed
+    memory: 2Gi
+    cpu: 1
 
 
 ## List of policies to be created after minio install
@@ -532,6 +534,7 @@ postJob:
 ## Use this field to add environment variables relevant to MinIO server. These fields will be passed on to MinIO container(s)
 ## when Chart is deployed
 environment:
+  MINIO_STORAGE_CLASS: {{ _minio.storage_class }}
   ## Please refer for comprehensive list https://min.io/docs/minio/linux/reference/minio-server/minio-server.html
   ## MINIO_SUBNET_LICENSE: "License key obtained from https://subnet.min.io"
   ## MINIO_BROWSER: "off"
