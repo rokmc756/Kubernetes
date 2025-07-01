@@ -61,7 +61,7 @@ _minio:
     minor_version: 28
     patch_version: 0
     build_version:
-  hostname: "minio0.jtest.pivotal.io"
+    hostname: "minio-console.jtest.pivotal.io"
   service:
     metadata:
       name: minio-loadbalancer
@@ -70,15 +70,15 @@ _minio:
     metadata:
       name: minio-ingress
       namespace: minio
-    hostname: "minio0.jtest.pivotal.io"
+      hostname: "minio-console.jtest.pivotal.io"
   kernel_parameters:
     - "net.ipv4.neigh.default.gc_thresh1 = 0"   # For ARP Cache
     - "fs.inotify.max_user_instances=2280"
     - "fs.inotify.max_user_watches=755360"
   lb:
     install: true
-    s3_ip_addr: "192.168.1.180"
-    console_ip_addr: "192.168.1.181"
+    s3_ip_addr: 192.168.1.180
+    console_ip_addr: 192.168.1.181
   resources:
     cpu: 1
     memory: 2Gi
@@ -131,10 +131,10 @@ _nginx:
     minor_version:
     patch_version:
     replica: 1
-    hostname: minio0
+    hostname: minio-console
     domain: jtest.pivotal.io
     service: minio-console
-    ip_addr: "192.168.1.179"
+    ip_addr: 192.168.1.179
     port: 9001
   k8s_ingress:
     major_version: 3

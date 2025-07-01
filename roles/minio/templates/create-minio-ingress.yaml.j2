@@ -12,7 +12,6 @@ spec:
   tls:
   - hosts:
     - "*.{{ _nginx.ingress.hostname }}"
-    # - "{{ _minio.hostname }}"
     secretName: secret-tls
   rules:
   - host: "{{ _nginx.ingress.hostname }}.{{ _nginx.ingress.domain }}"
