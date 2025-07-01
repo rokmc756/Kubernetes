@@ -1,3 +1,9 @@
 ---
+- name: Set MinIO Version
+  set_fact:
+    minio_version: "{{ _minio.major_version }}.{{ _minio.minor_version }}.{{ _minio.patch_version }}"
+
+
 - import_tasks: directpv/check-nvme-list.yml
   when: _minio.directpv == true
+

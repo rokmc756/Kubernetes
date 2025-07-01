@@ -1,7 +1,7 @@
 ---
 - name: Create Directory for Persistent Volumes
   file:
-    path: "{{ _minio.storage_path }}-{{ item }}"
+    path: "{{ _minio.persistence.storage_path }}-{{ item }}"
     state: directory
     owner: root
     group: root

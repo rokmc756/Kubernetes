@@ -1,36 +1,42 @@
 ---
-- name: Check OS ( MinIO )
+- name: Check OS ( MinIO MNMD )
   fail: msg="Not a Red Hat or SUSE based System!"
   when: ansible_os_family != 'RedHat' or  ansible_os_family != 'CentOS' or  ansible_os_family != 'Rocky' or ansible_os_family != 'openSUSE Leap'
 
 
 - name: Set facts for Minio
   import_tasks: set-minio-facts.yml
-  tags: install, uninstall, apply, deploy, destroy, create, delete, setup, remove, enable, disable, copy
+  tags: install, uninstall, apply, deploy, destroy, create, delete, setup, remove, enable, disable, copy, prepare, clean
 
 
 - name: Install Krew to Setup DirectPV
   import_tasks: directpv/install-krew.yml
-  tags: setup, install
+  tags: setup, create, install
   when: ( directpv is defined and directpv == true and _minio.directpv == true ) and inventory_hostname in groups['master']
 
 
 - name: Install DirectPV
   import_tasks: directpv/install-directpv.yml
-  tags: setup, install
+  tags: setup, create, install
   when: ( directpv is defined and directpv == true and _minio.directpv == true ) and inventory_hostname in groups['master']
-
-
-- name: Apply Kernel Parameters
-  import_tasks: apply-minio-kernel-parameters.yml
-  tags: apply, install
-  when: ( param is defined and param == true ) or ( minio_all is defined and minio_all == true )
 
 
 - name: Enable Helm Repository
   import_tasks: enable-helm-repo.yml
   tags: enable, install
   when: (( repo is defined and repo == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Prepare Environment such as Creating Directory and Applying Kernel Parameters
+  import_tasks: prepare-minio-env.yml
+  tags: prepare, install
+  when: ( env is defined and env == true ) or ( minio_all is defined and minio_all == true )
+
+
+- name: Deploy Prometheus Metrics
+  import_tasks: install-prometheus.yml
+  tags: setup, install
+  when: (( prometheus is defined and prometheus == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Copy Minio Template
@@ -87,26 +93,32 @@
   when: (( service is defined and service == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
+- name: Destroy Prometheus Metrics
+  import_tasks: uninstall-prometheus.yml
+  tags: destroy, uninstall
+  when: (( prometheus is defined and prometheus == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Cleanup Environment such as Deleting Directory and Removing Kernel Parameters
+  import_tasks: cleanup-minio-env.yml
+  tags: clean, uninstall
+  when: ( env is defined and env == true ) or ( minio_all is defined and minio_all == true )
+
+
 - name: Disable Helm Repository
   import_tasks: disable-helm-repo.yml
   tags: disable, uninstall
   when: (( repo is defined and repo == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
-- name: Remove Kernel Parameters
-  import_tasks: remove-minio-kernel-parameters.yml
-  tags: remove, delete, uninstall
-  when: ( param is defined and param == true ) or ( minio_all is defined and minio_all == true )
-
-
 - name: Uninstall DirectPV
   import_tasks: directpv/uninstall-directpv.yml
-  tags: remove, uninstall
+  tags: remove, delete, uninstall
   when: ( directpv is defined and directpv == true and _minio.directpv == true )
 
 
 - name: Uninstall Krew
   import_tasks: directpv/uninstall-krew.yml
-  tags: remove, uninstall
+  tags: remove, delete, uninstall
   when: ( directpv is defined and directpv == true and _minio.directpv == true ) and inventory_hostname in groups['master']
 

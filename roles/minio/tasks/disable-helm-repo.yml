@@ -7,6 +7,6 @@
   with_items:
     - jetstack
     - minio
-    # - bitnami
+    - prometheus-community
 - debug: msg={{ remove_helm_repos }}
 

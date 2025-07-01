@@ -23,7 +23,8 @@
 
 - name: Deploy MinIO
   shell: |
-    /usr/local/bin/helm install minio minio/minio -n {{ _minio.namespace }} -f {{ base_path }}/minio-values.yaml
+    /usr/local/bin/helm install minio minio/minio -n {{ _minio.namespace }} --version {{ minio_version }} \
+    --set image.tag={{ _minio.image_tag }} -f {{ base_path }}/minio-values.yaml
   register: deploy_minio
 - debug: msg={{ deploy_minio }}
   when: print_debug == true

@@ -1,7 +1,7 @@
 ---
 - name: Remove Directory for Persistent Volumes
   file:
-    path: "{{ _minio.storage_path }}-{{ item }}"
+    path: "{{ _minio.persistence.storage_path }}-{{ item }}"
     state: absent
   register: remove_pv_dir
   with_sequence: start=0 end={{ total_minio_containers|int }}

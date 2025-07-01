@@ -1,0 +1,33 @@
+---
+- name: Uninstall Prometheus
+  shell: |
+    /usr/local/bin/helm uninstall prometheus -n {{ _prometheus.namespace }}
+  register: uninstall_prometheus
+  ignore_errors: true
+- debug: msg={{ uninstall_prometheus }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Validate if Prometheus Controller Containers are Deleted
+  shell: |
+    kubectl get pods -n {{ _prometheus.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep -E "Running|Terminating" | wc -l
+  register: check_prometheus_containers
+  until: check_prometheus_containers.stdout|int == 0
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "prometheus-", replica: "{{ _prometheus.replica }}" }
+- debug: msg={{ check_prometheus_containers }}
+  when: print_debug == true
+
+
+- name: Delete Namespace for Persistent Volumes
+  shell: |
+    kubectl delete namespace {{ _prometheus.namespace }}
+  register: delete_namespace
+  ignore_errors: true
+- debug: msg={{ delete_namespace }}
+  ignore_errors: true
+  when: print_debug == true
+

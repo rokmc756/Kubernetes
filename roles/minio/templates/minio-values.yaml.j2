@@ -13,7 +13,7 @@ clusterDomain: "cluster.local"
 ## Set default image, imageTag, and imagePullPolicy. mode is used to indicate the
 image:
   repository: "quay.io/minio/minio"
-  tag: RELEASE.2024-12-18T13-15-44Z
+  tag: "{{ _minio.image_tag }}"
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -24,7 +24,7 @@ imagePullSecrets: []
 ## client used to create a default bucket).
 mcImage:
   repository: "quay.io/minio/mc"
-  tag: RELEASE.2024-11-21T17-21-54Z
+  tag: "{{ _mc.image_tag }}"
   pullPolicy: IfNotPresent
 
 
@@ -68,12 +68,12 @@ extraContainers: []
 
 ## Internal port number for MinIO S3 API container
 ## Change service.port to change external port number
-minioAPIPort: "9000"
+minioAPIPort: "{{ _minio.api_port }}"
 
 
 ## Internal port number for MinIO Browser Console container
 ## Change consoleService.port to change external port number
-minioConsolePort: "9001"
+minioConsolePort: "{{ _minio.console_port }}"
 
 
 ## Update strategy for Deployments
@@ -101,8 +101,8 @@ runtimeClassName: ""
 ## Set default rootUser, rootPassword
 ## rootUser and rootPassword is generated when not set
 ## Distributed MinIO ref: https://min.io/docs/minio/linux/operations/install-deploy-manage/deploy-minio-multi-node-multi-drive.html
-rootUser: "admin"
-rootPassword: "changeme"
+rootUser: "{{ _minio.root_user }}"
+rootPassword: "{{ _minio.root_password }}"
 
 
 ## Use existing Secret that store following variables:
@@ -136,7 +136,7 @@ drivesPerNode: 1
 # Number of MinIO containers running
 replicas: "{{ _minio.replica|int }}"
 # Number of expanded MinIO clusters
-pools: 1
+pools: "{{ _minio.pools|int }}"
 
 
 ## TLS Settings for MinIO
@@ -158,7 +158,7 @@ trustedCertsSecret: ""
 ## Enable persistence using Persistent Volume Claims
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
 persistence:
-  enabled: true
+  enabled: "{{ _minio.persistence.enabled }}"
   annotations: {}
 
   ## A manually managed Persistent Volume and Claim
@@ -175,10 +175,10 @@ persistence:
   ##
   ## Storage class of PV to bind. By default it looks for standard storage class.
   ## If the PV uses a different storage class, specify that here.
-  storageClass: {{ _minio.storage_class }}
+  storageClass: {{ _minio.persistence.storage_class }}
   volumeName: ""
-  accessMode: ReadWriteOnce
-  size: 10Gi  # size: 500Gi
+  accessMode: "{{ _minio.persistence.access_mode }}"
+  size: "{{ _minio.persistence.size }}"   #  size: 500Gi
 
   ## If subPath is set mount a sub folder of a volume instead of the root of the volume.
   ## This is especially handy for volume plugins that don't natively support sub mounting (like glusterfs).
@@ -306,8 +306,8 @@ podLabels: {}
 resources:
   requests:
     # memory: 16Gi -- memory allocation failed
-    memory: 2Gi
-    cpu: 1
+    memory: "{{ _minio.resources.memory }}"
+    cpu: "{{ _minio.resources.cpu }}"
 
 
 ## List of policies to be created after minio install
@@ -386,8 +386,8 @@ users:
   ## Add new policies as explained here https://min.io/docs/minio/kubernetes/upstream/administration/identity-access-management.html#access-management
   ## NOTE: this will fail if LDAP is enabled in your MinIO deployment
   ## make sure to disable this if you are using LDAP.
-  - accessKey: {{ _mc.access_key }}
-    secretKey: {{ _mc.secret_key }}
+  - accessKey: "{{ _mc.access_key }}"
+    secretKey: "{{ _mc.secret_key }}"
     policy: consoleAdmin
   #- accessKey: console
   #  secretKey: console123
@@ -534,7 +534,7 @@ postJob:
 ## Use this field to add environment variables relevant to MinIO server. These fields will be passed on to MinIO container(s)
 ## when Chart is deployed
 environment:
-  MINIO_STORAGE_CLASS: {{ _minio.storage_class }}
+  MINIO_STORAGE_CLASS: "{{ _minio.persistence.storage_class }}"
   ## Please refer for comprehensive list https://min.io/docs/minio/linux/reference/minio-server/minio-server.html
   ## MINIO_SUBNET_LICENSE: "License key obtained from https://subnet.min.io"
   ## MINIO_BROWSER: "off"
@@ -594,10 +594,10 @@ serviceAccount:
 
 metrics:
   serviceMonitor:
-    enabled: false
+    enabled: "{{ _minio.metrics.service_monitor.enabled }}"
     # scrape each node/pod individually for additional metrics
-    includeNode: false
-    public: true
+    includeNode: "{{ _minio.metrics.service_monitor.include_node }}"
+    public: "{{ _minio.metrics.service_monitor.public }}"
     # additionalLabels: {}
     # annotations: {}
     # for node metrics
