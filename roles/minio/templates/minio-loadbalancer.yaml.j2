@@ -29,7 +29,7 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   rules:
-    - host: {{ _minio.ingress.hostname }}
+    - host: {{ _nginx.ingress.hostname }}
       http:
         paths:
           - path: /
