@@ -40,13 +40,11 @@ _grafana:
     - "net.ipv4.neigh.default.gc_thresh1 = 0"       # For ARP Cache
   lb:
     install: false
-    ip_addr: "192.168.1.183"
+    ip_addr: "192.168.1.184"
   admin:
     replica: 1
 
-
 total_grafana_containers: "{{ _grafana.replica|int + _grafana.admin.replica|int }}"
-
 
 _helm:
   enable_repo: true
@@ -54,7 +52,6 @@ _helm:
   minor_version:
   patch_version:
   build_version:
-
 
 _nginx:
   ingress:
@@ -69,12 +66,11 @@ _nginx:
     service: grafana
     port: 80
     domain: jtest.pivotal.io
-    ip_addr: "192.168.1.182"
+    ip_addr: "192.168.1.183"
   k8s_ingress:
     major_version: 3
     minor_version: 0
     patch_version: 2
-
 
 _ssl:
   dir: "{{ base_path }}/grafana-certs"

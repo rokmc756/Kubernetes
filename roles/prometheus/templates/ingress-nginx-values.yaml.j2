@@ -10,7 +10,7 @@ controller:
       enabled: true
     type: LoadBalancer
     externalIPs: []
-    loadBalancerIP: "{{ _nginx.ingress.console.ip_addr }}"
+    loadBalancerIP: "{{ _nginx.ingress.prometheus.ip_addr }}"
     ipFamilyPolicy: SingleStack
     ipFamilies:
       - IPv4

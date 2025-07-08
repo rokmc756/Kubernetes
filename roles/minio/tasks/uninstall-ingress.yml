@@ -6,8 +6,10 @@
   register: copy_nginx_ingress_config
   ignore_errors: true
   with_items:
-    - "minio-ingress-class.yaml"
-    - "create-minio-ingress.yaml"
+    - "minio-console-ingress-class.yaml"
+    - "create-minio-console-ingress.yaml"
+    - "minio-api-ingress-class.yaml"
+    - "create-minio-api-ingress.yaml"
 - debug: msg={{ copy_nginx_ingress_config }}
 
 
@@ -17,10 +19,12 @@
   register: delete_nginx_ingress
   ignore_errors: true
   with_items:
-    - "create-minio-ingress.yaml"
-    - "minio-ingress-class.yaml"
+    - "create-minio-console-ingress.yaml"
+    - "minio-console-ingress-class.yaml"
+    - "create-minio-api-ingress.yaml"
+    - "minio-api-ingress-class.yaml"
   args:
-    chdir: "{{ base_path }}/"
+    chdir: "{{ base_path }}"
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
 - debug: msg={{ delete_nginx_ingress }}
@@ -29,26 +33,30 @@
 
 - name: Uninstall NGINX Ingress
   shell: |
-    helm uninstall {{ _nginx.ingress.name }} -n {{ _nginx.ingress.namespace }}
+    helm uninstall {{ item.nginx_ingress_name }} -n {{ _nginx.ingress.namespace }}
   register: uninstall_nginx_ingress
   ignore_errors: true
   args:
-    chdir: "{{ base_path }}/"
+    chdir: "{{ base_path }}"
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+  with_items:
+    - { nginx_ingress_name: "{{ _nginx.ingress.console.name }}", ip_addr: "{{ _nginx.ingress.console.ip_addr }}", ingress_class: "{{ _nginx.ingress.console.class_name }}" }
+    - { nginx_ingress_name: "{{ _nginx.ingress.api.name }}",     ip_addr: "{{ _nginx.ingress.api.ip_addr }}",     ingress_class: "{{ _nginx.ingress.api.class_name }}" }
 - debug: msg={{ uninstall_nginx_ingress }}
 
 
 - name: Validate if NGINX Ingress Controller Containers are Running
   shell: |
-    kubectl get pod -n {{ _nginx.ingress.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep Running | wc -l
+    kubectl get pod -n {{ _nginx.ingress.namespace }} | grep {{ item.svc }} | grep controller-admission | awk '{print $3}' | grep Running | wc -l
   register: check_nginx_ingress_controller_container
   ignore_errors: true
   until: check_nginx_ingress_controller_container.stdout|int == 0
   retries: 100
   delay: 10
   with_items:
-    - { svc: "ingress-nginx-controller-", replica: "{{ _minio.replica }}" }
+    - { svc: "minio-console-nginx-ingress", string: "Connected" }
+    - { svc: "minio-api-nginx-ingress",     string: "Connected" }
 - debug: msg={{ check_nginx_ingress_controller_container }}
   when: print_debug == true
 
@@ -59,7 +67,7 @@
   register: delete_namespace
   ignore_errors: true
   args:
-    chdir: "{{ base_path }}/"
+    chdir: "{{ base_path }}"
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
 - debug: msg={{ delete_namespace }}
@@ -73,7 +81,9 @@
   register: delete_nginx_ingress_config
   ignore_errors: true
   with_items:
-    - "minio-ingress-class.yaml"
-    - "create-minio-ingress.yaml"
+    - "minio-console-ingress-class.yaml"
+    - "create-minio-console-ingress.yaml"
+    - "minio-api-ingress-class.yaml"
+    - "create-minio-api-ingress.yaml"
 - debug: msg={{ delete_nginx_ingress_config }}
 

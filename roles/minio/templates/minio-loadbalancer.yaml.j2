@@ -29,7 +29,7 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   rules:
-    - host: {{ _nginx.ingress.hostname }}
+    - host: {{ _nginx.ingress.console.hostname }}
       http:
         paths:
           - path: /
@@ -39,3 +39,4 @@ spec:
                 name: minio-minio-yarn-ui
                 port:
                   name: http
+

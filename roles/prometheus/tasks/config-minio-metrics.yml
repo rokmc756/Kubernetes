@@ -1,0 +1,58 @@
+---
+
+- name: Install MinIO Client ( mcli ) Package
+  import_tasks: install-mcli-pkgs.yml
+
+
+- name: Add Local MinIO Client Configuration
+  shell: |
+    mcli alias set myminio http://minio-api.jtest.pivotal.io admin changeme --insecure
+  register: add_local_minio_client_config
+  args:
+    executable: /bin/bash
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg="{{ add_local_minio_client_config }}"
+  register: add_local_minio_client_config
+
+
+- name: Scraps MinIO Metrics
+  shell: |
+    echo "" >> /etc/prometheus/prometheus.yml
+    echo "####  Scraps {{ item.comment }}  ####" >> /etc/prometheus/prometheus.yml
+    mcli admin prometheus {{ item.action }} | sed 1d | sed -e 's/{{ item.org }}/{{ item.replace }}/g' | \
+    sed -e '1,$ s/^/  /g' | sed '$ s/$/\n    honor_timestamps: false/' >> /etc/prometheus/prometheus.yml
+  register: scrap_minio_cluster_metrics
+  args:
+    executable: /bin/bash
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+  with_items:
+    - { org: 'minio-job',              replace: 'minio-job',                       action: 'generate myminio',                                                       comment: 'Scraps MinIO Cluster Metrics' }
+    - { org: 'minio-job-node',         replace: 'minio-job-node',                  action: 'generate myminio node',                                                  comment: 'Scraps MinIO Node Metrics' }
+    - { org: 'minio-job',              replace: 'minio-job-v2-cluster',            action: 'generate myminio cluster',                                               comment: 'Scraps MinIO Cluster Metrics' }
+    - { org: 'minio-job-bucket',       replace: 'minio-job-bucket',                action: 'generate myminio bucket',                                                comment: 'Scraps MinIO Buckets Metrics' }
+    - { org: 'minio-job-resource',     replace: 'minio-job-resource',              action: 'generate myminio resource',                                              comment: 'Scraps MinIO Resource Metrics' }
+    - { org: 'minio-job',              replace: 'minio-job-v3-api',                action: 'generate myminio --api-version v3',                                      comment: 'Scraps MinIO v3 API Metrics' }
+    - { org: 'minio-job-cluster',      replace: 'minio-job-v3-cluster',            action: 'generate myminio cluster --api-version v3',                              comment: 'Scraps MinIO v3 Cluster Metrics' }
+    - { org: 'minio-job-scanner',      replace: 'minio-job-v3-scanner',            action: 'generate myminio scanner --api-version v3',                              comment: 'Scraps MinIO v3 Scanner Metrics' }
+    - { org: 'minio-job-replication',  replace: 'minio-job-bucket01-replication',  action: 'generate myminio replication --bucket jtest-bucket01 --api-version v3',  comment: 'Scraps MinIO v3 Replication Bucket Metrics' }
+    - { org: 'minio-job-replication',  replace: 'minio-job-bucket02-replication',  action: 'generate myminio replication --bucket jtest-bucket02 --api-version v3',  comment: 'Scraps MinIO v3 Replication Bucket Metrics' }
+    - { org: 'minio-job-replication',  replace: 'minio-job-bucket03-replication',  action: 'generate myminio replication --bucket jtest-bucket03 --api-version v3',  comment: 'Scraps MinIO v3 Replication Bucket Metrics' }
+    - { org: 'minio-job-api',          replace: 'minio-job-bucket01-api',          action: 'generate myminio api --bucket jtest-bucket01 --api-version v3',          comment: 'Scraps MinIO v3 API Bucket Metrics' }
+    - { org: 'minio-job-api',          replace: 'minio-job-bucket02-api',          action: 'generate myminio api --bucket jtest-bucket02 --api-version v3',          comment: 'Scraps MinIO v3 API Bucket Metrics' }
+    - { org: 'minio-job-api',          replace: 'minio-job-bucket03-api',          action: 'generate myminio api --bucket jtest-bucket03 --api-version v3',          comment: 'Scraps MinIO v3 API Bucket Metrics' }
+- debug: msg="{{ scrap_minio_cluster_metrics }}"
+
+
+- name: Reload and Restart Prometheus Services
+  systemd:
+    daemon_reexec: true
+    daemon_reload: true
+    name: "{{ item }}"
+    enabled: true
+    state: restarted
+  register: restart_prometheus_services
+  with_items:
+    - prometheus
+

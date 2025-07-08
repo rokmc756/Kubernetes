@@ -1,13 +1,11 @@
 base_path: /root
 
-
 _kustomize:
   install: true
   download_url: "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
   major_version: 5
   minor_version: 4
   patch_version: 2
-
 
 _prometheus:
   install: true
@@ -56,9 +54,7 @@ _prometheus:
     replica: 3
     ip_addr: 192.168.1.188
 
-
 total_prometheus_containers: "{{ _prometheus.server.replica|int +_prometheus.alertmanager.replica|int }}"
-
 
 _helm:
   enable_repo: true
@@ -67,32 +63,34 @@ _helm:
   patch_version:
   build_version:
 
-
 _nginx:
   ingress:
     install: true
-    name: nginx-ingress
-    class_name: prometheus-ingress-class
-    namespace: "prometheus-nginx-ingress"
     major_version:
     minor_version:
     patch_version:
-    server:
-      ingress_name: server-ingress
-      ip_addr: 192.168.1.184
-      hostname: prometheus-server
-      service: prometheus-server
-    alertmanager:
-      ingress_name: alertmanager-ingress
-      ip_addr: 192.168.1.185
-      hostnaame: prometheus-alertmanager
-      service: prometheus-alertmanager
+    namespace: "prometheus-nginx-ingress"
     domain: jtest.pivotal.io
+    prometheus:
+      name: prometheus-nginx-ingress
+      class_name: prometheus-ingress-class
+      replica: 1
+      hostname: prometheus
+      service: prometheus-server
+      ip_addr: 192.168.1.185
+      port: 80
+    alertmanager:
+      name: alertmanager-nginx-ingress
+      class_name: alertmanager-ingress-class
+      replica: 1
+      hostname: alertmanager
+      service: prometheus-alertmanager
+      ip_addr: 192.168.1.186
+      port: 80
   k8s_ingress:
     major_version: 3
     minor_version: 0
     patch_version: 2
-
 
 _ssl:
   dir: "{{ base_path }}/prometheus-certs"
@@ -103,5 +101,4 @@ _ssl:
   organization: "Pivotal"
   common_name: "jest.pivotal.io"
   email: "rokmc756@gmail.com"
-
 

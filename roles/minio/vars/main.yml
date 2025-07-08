@@ -15,13 +15,6 @@ _directpv:
   minor_version: 1
   patch_version: 5
 
-_prometheus:
-  major_version:
-  minor_version:
-  patch_version:
-  namespace: prometheus
-  replica: 1
-
 _minio:
   install: true
   directpv: true
@@ -75,8 +68,8 @@ _minio:
     - "fs.inotify.max_user_watches=755360"
   lb:
     install: true
-    s3_ip_addr: 192.168.1.180
     console_ip_addr: 192.168.1.181
+    s3_ip_addr: 192.168.1.182
   resources:
     cpu: 1
     memory: 2Gi
@@ -107,7 +100,7 @@ _mc:
   config_opts:
     hosts:
       minio:
-        url: http://minio-s3.jtest.pivotal.io:9000
+        url: https://minio-api.jtest.pivotal.io
         accessKey: "admin"
         secretKey: "changeme"
         api: S3v4
@@ -119,18 +112,27 @@ _mc:
 _nginx:
   ingress:
     install: true
-    name: nginx-ingress
-    class_name: minio-ingress-class
-    namespace: "minio-nginx-ingress"
     major_version:
     minor_version:
     patch_version:
-    replica: 1
-    hostname: minio-console
+    namespace: "minio-nginx-ingress"
     domain: jtest.pivotal.io
-    service: minio-console
-    ip_addr: 192.168.1.179
-    port: 9001
+    console:
+      name: minio-console-nginx-ingress
+      class_name: minio-console-ingress-class
+      replica: 1
+      hostname: minio-console
+      service: minio-console
+      ip_addr: 192.168.1.179
+      port: 9001
+    api:
+      name: minio-api-nginx-ingress
+      class_name: minio-api-ingress-class
+      replica: 1
+      hostname: minio-api
+      service: minio
+      ip_addr: 192.168.1.180
+      port: 9000
   k8s_ingress:
     major_version: 3
     minor_version: 0

@@ -15,34 +15,6 @@
   when: _grafana.directpv == false
 
 
-#- name: Copy Cluster Local PVC Config Yaml
-#  template:
-#    src: "{{ item }}.j2"
-#    dest: "{{ base_path }}/{{ item }}"
-#  register: copy_cluster_local_pvc_config_yaml
-#  with_items:
-#    - "local-storage-class.yaml"
-#    - "local-storage-pv.yaml"
-#    - "local-storage-pvc.yaml"
-#- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
-
-
-#- name: Create Persistent Volumes
-#  shell: |
-#    kubectl create -f {{ item }}
-#  register: create_pvc
-#  with_items:
-#    - "local-storage-class.yaml"
-#    - "local-storage-pv.yaml"
-#    - "local-storage-pvc.yaml"
-#  args:
-#    chdir: "{{ base_path }}/"
-#  environment:
-#    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-#- debug: msg={{ create_pvc }}
-#  when: print_debug == true
-
-
 - name: Copy Grafana Helm Config
   template:
     src: "{{ item }}.j2"
@@ -85,7 +57,6 @@
 # https://medium.com/swlh/free-ssl-certs-with-lets-encrypt-for-grafana-prometheus-operator-helm-charts-b3b629e84ba1
 # https://medium.com/@rudaym/grafana-with-https-in-kubernetes-2c48961ab4a3
 
-
 #- name: Generate Grafana TLS Cert Files
 #  import_tasks: gen-grafana-certs.yml
 
@@ -101,7 +72,4 @@
 #- debug: msg={{ create_tls_secret }}
 #  when: print_debug == true
 
-
-# PostgreSQL Monitor
-# https://apgapg.medium.com/analyzing-postgres-queries-performance-with-grafana-b8cd2f74c401
 

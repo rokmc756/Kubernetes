@@ -4,7 +4,7 @@
     kubectl create namespace {{ _nginx.ingress.namespace }}
   register: create_namespace
   args:
-    chdir: "{{ base_path }}/"
+    chdir: "{{ base_path }}"
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
 - debug: msg={{ create_namespace }}
@@ -21,20 +21,23 @@
 - debug: msg={{ copy_nginx_ingress_helm_config }}
 
 
-- name: Install NGINX Ingress
+- name: Install Prometheus and AlertManager NGINX Ingress
   shell: |
-    helm install {{ _nginx.ingress.name }} ingress-nginx/ingress-nginx -n {{ _nginx.ingress.namespace }} \
-    --set controller.ingressClass=prometheus-ingress-class \
-    --set controller.ingressClassResource.name=prometheus-ingress-class \
+    helm install {{ item.nginx_ingress_name }} ingress-nginx/ingress-nginx -n {{ _nginx.ingress.namespace }} \
+    --set controller.ingressClass={{ item.ingress_class }} \
+    --set controller.ingressClassResource.name={{ item.ingress_class }} \
     --set controller.service.enabled=true \
     --set controller.external.enabled=true \
     --set controller.service.type=LoadBalancer \
-    --set controller.service.loadBalancerIP={{ _nginx.ingress.ip_addr }}
+    --set controller.service.loadBalancerIP={{ item.ip_addr }}
   register: install_nginx_ingress
   args:
-    chdir: "{{ base_path }}/"
+    chdir: "{{ base_path }}"
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+  with_items:
+    - { nginx_ingress_name: "{{ _nginx.ingress.prometheus.name }}",   ip_addr: "{{ _nginx.ingress.prometheus.ip_addr }}",   ingress_class: "{{ _nginx.ingress.prometheus.class_name }}" }
+    - { nginx_ingress_name: "{{ _nginx.ingress.alertmanager.name }}", ip_addr: "{{ _nginx.ingress.alertmanager.ip_addr }}", ingress_class: "{{ _nginx.ingress.alertmanager.class_name }}" }
 - debug: msg={{ install_nginx_ingress }}
 
 
@@ -46,21 +49,23 @@
   retries: 100
   delay: 10
   with_items:
-    - { svc: "ingress-nginx-controller-", replica: "{{ _prometheus.admin.replica }}" }
+    - { svc: "prometheus-nginx-ingress", replica: "{{ _nginx.ingress.prometheus.replica }}" }
+    - { svc: "alertmanager-nginx-ingress",     replica: "{{ _nginx.ingress.alertmanager.replica }}" }
 - debug: msg={{ check_nginx_ingress_controller_container }}
   when: print_debug == true
 
 
-- name: Validate if NGINX Controller Adminission is Connected
+- name: Validate if NGINX Ingress Controller got IP Address
   shell: |
-    nc -zv $(kubectl -n {{ _nginx.ingress.namespace }} get svc | grep nginx-controller-admission | awk '{print $3}') 443 2>&1 | grep Connected | awk '{print $2}'
-  register: check_nginx_controller_admission
-  until: check_nginx_controller_admission.stdout.find(item.string) != -1
+    kubectl -n {{ _nginx.ingress.namespace }} get svc | grep -v admission | grep nginx-ingress | awk '{print $4}'
+  register: check_nginx_ingress_controller_container_ip
+  until: check_nginx_ingress_controller_container_ip.stdout.find(item.ip) != -1
   retries: 100
   delay: 10
   with_items:
-    - { svc: "nginx-controller-admission", string: "Connected" }
-- debug: msg={{ check_nginx_controller_admission }}
+    - { svc: "prometheus-ingress-nginx",   ip: "{{ _nginx.ingress.prometheus.ip_addr }}" }
+    - { svc: "alertmanager-ingress-nginx", ip: "{{ _nginx.ingress.alertmanager.ip_addr }}" }
+- debug: msg={{ check_nginx_ingress_controller_container_ip }}
   when: print_debug == true
 
 
@@ -72,20 +77,51 @@
   with_items:
     - "prometheus-ingress-class.yaml"
     - "create-prometheus-ingress.yaml"
+    - "alertmanager-ingress-class.yaml"
+    - "create-alertmanager-ingress.yaml"
 - debug: msg={{ copy_nginx_ingress_config }}
 
 
-- name: Apply NGINX Ingress
+- name: Apply NGINX Ingress Class
   shell: |
-    kubectl apply -f {{ item }}
-  register: apply_nginx_ingress
+    kubectl apply -f {{ base_path }}/{{ item }}
+  register: apply_nginx_ingress_class
   with_items:
     - "prometheus-ingress-class.yaml"
-    - "create-prometheus-ingress.yaml"
+    - "alertmanager-ingress-class.yaml"
   args:
-    chdir: "{{ base_path }}/"
+    chdir: "{{ base_path }}"
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-- debug: msg={{ apply_nginx_ingress }}
+- debug: msg={{ apply_nginx_ingress_class }}
+  when: print_debug == true
+
+
+- name: Validate if NGINX Controller Adminission is Connected
+  shell: |
+    nc -zv $(kubectl -n {{ _nginx.ingress.namespace }} get svc | grep {{ item.svc }} | grep controller-admission | awk '{print $3}') 443 2>&1 | grep Connected | awk '{print $2}'
+  register: check_nginx_controller_admission
+  until: check_nginx_controller_admission.stdout.find(item.string) != -1
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "prometheus-nginx-ingress",   string: "Connected" }
+    - { svc: "alertmanager-nginx-ingress", string: "Connected" }
+- debug: msg={{ check_nginx_controller_admission }}
+  when: print_debug == true
+
+
+- name: Create Prometheus and AlertManager Ingress
+  shell: |
+    kubectl apply -f {{ base_path }}/{{ item }}
+  register: create_elastic_ingress
+  with_items:
+    - "create-prometheus-ingress.yaml"
+    - "create-alertmanager-ingress.yaml"
+  args:
+    chdir: "{{ base_path }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+- debug: msg={{ create_elastic_ingress }}
   when: print_debug == true
 

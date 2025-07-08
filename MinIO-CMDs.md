@@ -42,5 +42,10 @@ $ kubectl -n minio exec -it pod/minio-0 -- /bin/sh
 
 /usr/bin/warp mixed --host https://rk9-node01.jtest.pivotal.io:9000 --access-key minioadmin --secret-key changeme --duration 1m --objects 1000 --concurrent 16
 
+# For 80 of nginx http ingress
+/usr/bin/warp mixed --host minio-api.jtest.pivotal.io --access-key admin --secret-key changeme --duration 30s --objects 500 --concurrent 8
+
+# For 443 of nginx https ingress
+/usr/bin/warp mixed --host minio-api.jtest.pivotal.io --tls --insecure --access-key admin --secret-key changeme --duration 30s --objects 500 --concurrent 8
 ```
 
