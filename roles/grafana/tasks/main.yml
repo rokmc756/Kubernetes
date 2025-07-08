@@ -9,10 +9,16 @@
   tags: install, uninstall, enable, disable, reinit
 
 
-- name: Apply Kernel Parameters for Grafana
-  import_tasks: apply-grafana-kernel-parameters.yml
-  tags: install
-  when: ( grafana is defined and grafana == true ) or ( grafana_all is defined and grafana_all == true )
+#- name: Apply Kernel Parameters for Grafana
+#  import_tasks: apply-grafana-kernel-parameters.yml
+#  tags: install
+#  when: ( grafana is defined and grafana == true ) or ( grafana_all is defined and grafana_all == true )
+
+
+- name: Prepare Environment such as Creating Directory and Applying Kernel Parameters
+  import_tasks: prepare-grafana-env.yml
+  tags: prepare, install
+  when: ( env is defined and env == true ) or ( grafana_all is defined and grafana_all == true )
 
 
 - name: Enable Helm Repository
@@ -63,8 +69,14 @@
   when: (( repo is defined and repo == true ) or ( grafana_all is defined and grafana_all == true )) and inventory_hostname in groups['master']
 
 
-- name: Remove Kernel Parameters for Grafana
-  import_tasks: remove-grafana-kernel-parameters.yml
-  tags: uninstall
-  when: ( grafana is defined and grafana == true ) or ( grafana_all is defined and grafana_all == true )
+#- name: Remove Kernel Parameters for Grafana
+#  import_tasks: remove-grafana-kernel-parameters.yml
+#  tags: uninstall
+#  when: ( grafana is defined and grafana == true ) or ( grafana_all is defined and grafana_all == true )
+
+
+- name: Cleanup Environment such as Deleting Directory and Removing Kernel Parameters
+  import_tasks: cleanup-grafana-env.yml
+  tags: clean, uninstall
+  when: ( env is defined and env == true ) or ( grafana_all is defined and grafana_all == true )
 

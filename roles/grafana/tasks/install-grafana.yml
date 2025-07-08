@@ -11,32 +11,36 @@
   when: print_debug == true
 
 
-- name: Copy Cluster Local PVC Config Yaml
-  template:
-    src: "{{ item }}.j2"
-    dest: "{{ base_path }}/{{ item }}"
-  register: copy_cluster_local_pvc_config_yaml
-  with_items:
-    - "local-storage-class.yaml"
-    - "local-storage-pv.yaml"
-    - "local-storage-pvc.yaml"
-- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+- import_tasks: create-local-pv.yml
+  when: _grafana.directpv == false
 
 
-- name: Create Persistent Volumes
-  shell: |
-    kubectl create -f {{ item }}
-  register: create_pvc
-  with_items:
-    - "local-storage-class.yaml"
-    - "local-storage-pv.yaml"
-    - "local-storage-pvc.yaml"
-  args:
-    chdir: "{{ base_path }}/"
-  environment:
-    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-- debug: msg={{ create_pvc }}
-  when: print_debug == true
+#- name: Copy Cluster Local PVC Config Yaml
+#  template:
+#    src: "{{ item }}.j2"
+#    dest: "{{ base_path }}/{{ item }}"
+#  register: copy_cluster_local_pvc_config_yaml
+#  with_items:
+#    - "local-storage-class.yaml"
+#    - "local-storage-pv.yaml"
+#    - "local-storage-pvc.yaml"
+#- debug: msg={{ copy_cluster_local_pvc_config_yaml }}
+
+
+#- name: Create Persistent Volumes
+#  shell: |
+#    kubectl create -f {{ item }}
+#  register: create_pvc
+#  with_items:
+#    - "local-storage-class.yaml"
+#    - "local-storage-pv.yaml"
+#    - "local-storage-pvc.yaml"
+#  args:
+#    chdir: "{{ base_path }}/"
+#  environment:
+#    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+#- debug: msg={{ create_pvc }}
+#  when: print_debug == true
 
 
 - name: Copy Grafana Helm Config
@@ -84,6 +88,7 @@
 
 #- name: Generate Grafana TLS Cert Files
 #  import_tasks: gen-grafana-certs.yml
+
 
 #- name: Create a TLS Secret with the Contents of tls.key and tls.crt in the Grafana Namespace
 #  shell: |

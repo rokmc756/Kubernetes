@@ -5,8 +5,6 @@
   register: remove_helm_repos
   ignore_errors: yes
   with_items:
-    - jetstack
     - minio
-    - prometheus-community
 - debug: msg={{ remove_helm_repos }}
 

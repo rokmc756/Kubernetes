@@ -54,7 +54,12 @@ ingress:
 persistence:
   type: pvc
   enabled: true
-  existingClaim: grafana
+{% if _grafana.directpv == true %}
+  storageClassName: {{ _grafana.directpv_storage_class }}
+{% else %}
+  storageClassName: {{ _grafana.storage_class }}
+{% endif %}
+  existingClaim: "" # grafana
   accessModes:
     - ReadWriteOnce
   size: 10Gi

@@ -1,0 +1,28 @@
+---
+- name: Create Directory for Persistent Volumes
+  file:
+    path: "{{ _grafana.persistence.storage_path }}-{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0777
+  register: create_pv_dir
+  with_sequence: start=0 end={{ total_grafana_containers|int }}
+  when: _grafana.directpv == false
+- debug: msg={{ create_pv_dir }}
+  when: print_debug == true and _grafana.directpv == false
+
+
+- name: Apply Kernel Parameters
+  lineinfile:
+    dest: /etc/sysctl.d/sysctl-k8s.conf
+    line: "{{ item }}"
+    state: present
+  register: apply_kernel_parameters
+  with_items:
+    - "{{ _grafana.kernel_parameters }}"
+  notify:
+    - Reload Sysctl
+- debug: msg={{ apply_kernel_parameters }}
+  when: print_debug == true
+

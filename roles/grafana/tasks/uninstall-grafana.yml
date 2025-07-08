@@ -28,35 +28,39 @@
   when: print_debug == true
 
 
-- name: Delete Persistent Volumes, Claim and Storage Class
-  shell: |
-    kubectl delete -f {{ item }}
-  register: delete_pvc
-  ignore_errors: true
-  with_items:
-    - "local-storage-pvc.yaml"
-    - "local-storage-pv.yaml"
-    - "local-storage-class.yaml"
-  args:
-    chdir: "{{ base_path }}/"
-  environment:
-    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-- debug: msg={{ delete_pvc }}
-  when: print_debug == true
+#- name: Delete Persistent Volumes, Claim and Storage Class
+#  shell: |
+#    kubectl delete -f {{ item }}
+#  register: delete_pvc
+#  ignore_errors: true
+#  with_items:
+#    - "local-storage-pvc.yaml"
+#    - "local-storage-pv.yaml"
+#    - "local-storage-class.yaml"
+#  args:
+#    chdir: "{{ base_path }}/"
+#  environment:
+#    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+#- debug: msg={{ delete_pvc }}
+#  when: print_debug == true
+#
+#
+#- name: Delete Local PVC Config Yaml
+#  file:
+#    path: "{{ base_path }}/{{ item }}"
+#    state: absent
+#  register: delete_local_pvc_config_yaml
+#  ignore_errors: true
+#  with_items:
+#    - "local-storage-pvc.yaml"
+#    - "local-storage-pv.yaml"
+#    - "local-storage-class.yaml"
+#- debug: msg={{ delete_local_pvc_config_yaml }}
+#  when: print_debug == true
 
 
-- name: Delete Local PVC Config Yaml
-  file:
-    path: "{{ base_path }}/{{ item }}"
-    state: absent
-  register: delete_local_pvc_config_yaml
-  ignore_errors: true
-  with_items:
-    - "local-storage-pvc.yaml"
-    - "local-storage-pv.yaml"
-    - "local-storage-class.yaml"
-- debug: msg={{ delete_local_pvc_config_yaml }}
-  when: print_debug == true
+- import_tasks: delete-local-pv.yml
+  when: _grafana.directpv == false
 
 
 - name: Delete Namespace for Persistent Volumes

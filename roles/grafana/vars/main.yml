@@ -1,9 +1,9 @@
 ---
 base_path: /root
 
-
 _grafana:
   install: false
+  directpv: true
   major_version: 10
   minor_version: 1
   patch_version: 0
@@ -13,6 +13,7 @@ _grafana:
   namespace: grafana
   storage_path: "/opt/grafana-storage"
   storage_class: "grafana-storage"
+  directpv_storage_class: "directpv-min-io"
   replica: 3
   db:
     name: "grafana"
@@ -32,14 +33,14 @@ _grafana:
       namespace: grafana
   ingress:
     metadata:
-      name: grafana-ingress
-      namespace: nginx-ingress
+      name: grafana-nginx-ingress
+      namespace: grafana-nginx-ingress
     hostname: "grafana.jtest.pivotal.io"
   kernel_parameters:
     - "net.ipv4.neigh.default.gc_thresh1 = 0"       # For ARP Cache
   lb:
     install: false
-    ip_addr: "192.168.1.218"
+    ip_addr: "192.168.1.183"
   admin:
     replica: 1
 
@@ -58,9 +59,9 @@ _helm:
 _nginx:
   ingress:
     install: true
-    name: nginx-ingress
+    name: grafana-nginx-ingress
     class_name: grafana-ingress-class
-    namespace: "nginx-ingress"
+    namespace: "grafana-nginx-ingress"
     major_version:
     minor_version:
     patch_version:
@@ -68,7 +69,7 @@ _nginx:
     service: grafana
     port: 80
     domain: jtest.pivotal.io
-    ip_addr: "192.168.1.219"
+    ip_addr: "192.168.1.182"
   k8s_ingress:
     major_version: 3
     minor_version: 0

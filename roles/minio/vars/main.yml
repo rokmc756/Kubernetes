@@ -1,14 +1,12 @@
 ---
 base_path: /root
 
-
 _krew:
   base_path: "/root"
   download_url: "https://github.com/kubernetes-sigs/krew/releases/latest/download"
   major_version: 0
   minor_version: 4
   patch_version: 5
-
 
 _directpv:
   base_path: "/root"
@@ -17,14 +15,12 @@ _directpv:
   minor_version: 1
   patch_version: 5
 
-
 _prometheus:
   major_version:
   minor_version:
   patch_version:
   namespace: prometheus
   replica: 1
-
 
 _minio:
   install: true
@@ -53,7 +49,8 @@ _minio:
   persistence:
     storage_path: "/opt/minio-storage"
     enabled: "true"
-    storage_class: "directpv-min-io"
+    directpv_storage_class: "directpv-min-io"
+    storage_class: "minio-storage"
     volume_name: ""
     access_mode: "ReadWriteOnce"
     size: "10Gi"
@@ -86,9 +83,7 @@ _minio:
   replica: 8
   pools: 1
 
-
 total_minio_containers: "{{ _minio.replica|int }}"
-
 
 _mc:
   download: false
@@ -121,13 +116,12 @@ _mc:
   secret_key: changeme
   minio_svc_alias: myminio
 
-
 _nginx:
   ingress:
     install: true
     name: nginx-ingress
     class_name: minio-ingress-class
-    namespace: "nginx-ingress"
+    namespace: "minio-nginx-ingress"
     major_version:
     minor_version:
     patch_version:
@@ -142,14 +136,12 @@ _nginx:
     minor_version: 0
     patch_version: 2
 
-
 _helm:
   enable_repo: true
   major_version: 3
   minor_version:
   patch_version:
   build_version:
-
 
 _ssl:
   dir: "{{ base_path }}/minio-certs"

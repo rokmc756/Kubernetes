@@ -13,7 +13,11 @@ spec:
   accessModes:
   - ReadWriteOnce
   persistentVolumeReclaimPolicy: Delete  # Retain
-  storageClassName: {{ _minio.storage_class }}
+{% if _minio.directpv == true %}
+  storageClassName: {{ _minio.persistence.directpv_storage_class }}
+{% else %}
+  storageClassName: {{ _minio.persistence.storage_class }}
+{% endif %}
   local:
     path: {{ _minio.storage_path }}-{{ n }}
   nodeAffinity:

@@ -7,7 +7,7 @@
 - name: Copy MinIO Client Binary from local Directory, roles/minio/files
   copy: src=mc-{{ _mc.release_date }}.tar.gz dest=/tmp/mc-{{ _mc.release_date }}.tar.gz mode=0644 owner=root group=root
   register: mc_local_copy
-  when: mc_bin_exists.stat.exists == false and minio.download == false
+  when: mc_bin_exists.stat.exists == false and _mc.download == false
 
 
 - name: Unarchive MinIO Client gzip File
@@ -19,7 +19,7 @@
     mode: "0755"
     remote_src: yes
   register: mc_unarchive
-  when: mc_bin_exists.stat.exists == false and minio.download == false
+  when: mc_bin_exists.stat.exists == false and _mc.download == false
 
 
 - name: Download MinIo Client

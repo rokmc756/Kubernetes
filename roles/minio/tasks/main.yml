@@ -33,15 +33,15 @@
   when: ( env is defined and env == true ) or ( minio_all is defined and minio_all == true )
 
 
-- name: Deploy Prometheus Metrics
-  import_tasks: install-prometheus.yml
-  tags: setup, install
-  when: (( prometheus is defined and prometheus == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+#- name: Deploy Prometheus Metrics
+#  import_tasks: install-prometheus.yml
+#  tags: setup, install
+#  when: (( prometheus is defined and prometheus == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Copy Minio Template
   import_tasks: copy-minio-temp.yml
-  tags: copy
+  tags: copy, install
   when: ( temp is defined and temp == true ) and inventory_hostname in groups['master']
 
 
@@ -93,10 +93,10 @@
   when: (( service is defined and service == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
-- name: Destroy Prometheus Metrics
-  import_tasks: uninstall-prometheus.yml
-  tags: destroy, uninstall
-  when: (( prometheus is defined and prometheus == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
+#- name: Destroy Prometheus Metrics
+#  import_tasks: uninstall-prometheus.yml
+#  tags: destroy, uninstall
+#  when: (( prometheus is defined and prometheus == true ) or ( minio_all is defined and minio_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Cleanup Environment such as Deleting Directory and Removing Kernel Parameters

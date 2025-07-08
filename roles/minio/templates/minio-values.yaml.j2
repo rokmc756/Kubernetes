@@ -175,7 +175,12 @@ persistence:
   ##
   ## Storage class of PV to bind. By default it looks for standard storage class.
   ## If the PV uses a different storage class, specify that here.
+{% if _minio.directpv == true %}
+  storageClass: {{ _minio.persistence.directpv_storage_class }}
+{% else %}
   storageClass: {{ _minio.persistence.storage_class }}
+{% endif %}
+
   volumeName: ""
   accessMode: "{{ _minio.persistence.access_mode }}"
   size: "{{ _minio.persistence.size }}"   #  size: 500Gi
@@ -534,7 +539,13 @@ postJob:
 ## Use this field to add environment variables relevant to MinIO server. These fields will be passed on to MinIO container(s)
 ## when Chart is deployed
 environment:
+{% if _minio.directpv == true %}
+  MINIO_STORAGE_CLASS: "{{ _minio.persistence.directpv_storage_class }}"
+{% else %}
   MINIO_STORAGE_CLASS: "{{ _minio.persistence.storage_class }}"
+{% endif %}
+
+
   ## Please refer for comprehensive list https://min.io/docs/minio/linux/reference/minio-server/minio-server.html
   ## MINIO_SUBNET_LICENSE: "License key obtained from https://subnet.min.io"
   ## MINIO_BROWSER: "off"

@@ -13,7 +13,11 @@ spec:
   accessModes:
   - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
+{% if _prometheus.directpv == true %}
+  storageClassName: {{ _prometheus.directpv_storage_class }}
+{% else %}
   storageClassName: {{ _prometheus.storage_class }}
+{% endif %}
   local:
     path: {{ _prometheus.storage_path }}-{{ n }}
   nodeAffinity:

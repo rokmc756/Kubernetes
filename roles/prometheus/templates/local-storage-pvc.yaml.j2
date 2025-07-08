@@ -6,7 +6,11 @@ metadata:
   name: data-prometheus-alertmanager-{{ n }}
   namespace: {{ _prometheus.namespace }}
 spec:
+{% if _prometheus.directpv == true %}
+  storageClassName: {{ _prometheus.directpv_storage_class }}
+{% else %}
   storageClassName: {{ _prometheus.storage_class }}
+{% endif %}
   accessModes:
     - ReadWriteOnce
   resources:
@@ -20,7 +24,11 @@ metadata:
   name: prometheus-server
   namespace: {{ _prometheus.namespace }}
 spec:
+{% if _prometheus.directpv == true %}
+  storageClassName: {{ _prometheus.directpv_storage_class }}
+{% else %}
   storageClassName: {{ _prometheus.storage_class }}
+{% endif %}
   accessModes:
     - ReadWriteOnce
   resources:

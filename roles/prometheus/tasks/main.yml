@@ -6,73 +6,71 @@
 
 - name: Set facts for Prometheus
   import_tasks: set-prometheus-facts.yml
-  tags:
-    - install
-    - uninstall
+  tags: install, uninstall, apply, remove, deploy, destroy, enable, disable
 
 
-- name: Apply Kernel Parameters
-  import_tasks: apply-prometheus-kernel-parameters.yml
-  tags: install
-  when: ( prometheus is defined and prometheus == true ) or ( prometheus_all is defined and prometheus_all == true )
+- name: Prepare Environment such as Creating Directory and Applying Kernel Parameters
+  import_tasks: prepare-prometheus-env.yml
+  tags: prepare, install
+  when: ( env is defined and env == true ) or ( prometheus_all is defined and prometheus_all == true )
 
 
 - name: Enable Helm Repository
   import_tasks: enable-helm-repo.yml
-  tags: install
-  when: (( prometheus is defined and prometheus == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
+  tags: enable, install
+  when: (( repo is defined and repo == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Install Kustomize
   import_tasks: install-kustomize.yml
-  tags: install
-  when: _kustomize.install == true and inventory_hostname in groups['master']
+  tags: setup, install
+  when: (( kustomize is defined and kustomize == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Deploy Prometheus
   import_tasks: install-prometheus.yml
-  tags: install
+  tags: deploy, install
   when: (( prometheus is defined and prometheus == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Install Load Balancer
   import_tasks: install-lb.yml
-  tags: install
+  tags: setup, install
   when: (( lb is defined and lb == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Install NGINX Ingress
   import_tasks: install-ingress.yml
-  tags: install
+  tags: setup, install
   when: ( ingress is defined and ingress == true ) and inventory_hostname in groups['master']
 
 
 - name: Unstall NGINX Ingress
   import_tasks: uninstall-ingress.yml
-  tags: uninstall
+  tags: remove, uninstall
   when: ( ingress is defined and ingress == true ) and inventory_hostname in groups['master']
 
 
 - name: Uninstall Load Balancer
   import_tasks: uninstall-lb.yml
-  tags: uninstall
+  tags: remove, uninstall
   when: (( lb is defined and lb == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Destroy Prometheus
   import_tasks: uninstall-prometheus.yml
-  tags: uninstall
+  tags: destroy, uninstall
   when: (( prometheus is defined and prometheus == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Disable Helm Repository
   import_tasks: disable-helm-repo.yml
-  tags: uninstall
+  tags: disable, uninstall
   when: (( prometheus is defined and prometheus == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
 
 
-- name: Remove Kernel Parameters
-  import_tasks: remove-prometheus-kernel-parameters.yml
-  tags: uninstall
-  when: ( prometheus is defined and prometheus == true ) or ( prometheus_all is defined and prometheus_all == true )
+- name: Cleanup Environment such as Deleting Directory and Removing Kernel Parameters
+  import_tasks: cleanup-prometheus-env.yml
+  tags: clean, uninstall
+  when: ( env is defined and env == true ) or ( prometheus_all is defined and prometheus_all == true )
 

@@ -13,7 +13,11 @@ spec:
   accessModes:
   - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
+{% if _minio.directpv == true %}
+  storageClassName: {{ _grafana.directpv_storage_class }}
+{% else %}
   storageClassName: {{ _grafana.storage_class }}
+{% endif %}
   local:
     path: {{ _grafana.storage_path }}-{{ n }}
   nodeAffinity:

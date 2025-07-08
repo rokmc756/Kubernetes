@@ -89,7 +89,11 @@ alertmanager:
     enabled: true
     mountPath: /bitnami/alertmanager/data
     subPath: ""
+{% if _prometheus.directpv == true %}
+    storageClass: "{{ _prometheus.directpv_storage_class }}"
+{% else %}
     storageClass: "{{ _prometheus.storage_class }}"
+{% endif %}
     accessModes:
       - ReadWriteOnce
     size: 8Gi
@@ -210,12 +214,16 @@ server:
     enabled: true
     mountPath: /bitnami/prometheus/data
     subPath: ""
+{% if _prometheus.directpv == true %}
+    storageClass: "{{ _prometheus.directpv_storage_class }}"
+{% else %}
     storageClass: "{{ _prometheus.storage_class }}"
+{% endif %}
     annotations: {}
     accessModes:
       - ReadWriteOnce
     size: 8Gi
-    existingClaim: "prometheus-server"
+    existingClaim: ""  # prometheus-server
     selector: {}
     dataSource: {}
   rbac:

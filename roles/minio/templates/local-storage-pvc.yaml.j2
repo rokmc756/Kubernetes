@@ -6,7 +6,11 @@ metadata:
   name: export-minio-{{ n }}
   namespace: {{ _minio.namespace }}
 spec:
-  storageClassName: {{ _minio.storage_class }}
+{% if _minio.directpv == true %}
+  storageClassName: {{ _minio.persistence.directpv_storage_class }}
+{% else %}
+  storageClassName: {{ _minio.persistence.storage_class }}
+{% endif %}
   accessModes:
     - ReadWriteOnce
   resources:

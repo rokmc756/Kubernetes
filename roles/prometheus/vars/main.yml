@@ -11,6 +11,7 @@ _kustomize:
 
 _prometheus:
   install: true
+  directpv: true
   major_version:
   minor_version:
   patch_version:
@@ -24,6 +25,7 @@ _prometheus:
   namespace: prometheus
   storage_path: "/opt/prometheus-storage"
   storage_class: "prometheus-storage"
+  directpv_storage_class: "directpv-min-io"
   k8s:
     major_version: 1
     minor_version: 28
@@ -45,14 +47,14 @@ _prometheus:
     - "fs.inotify.max_user_watches=755360"
   lb:
     install: true
-    ip_addr: 192.168.1.219
+    ip_addr: 192.168.1.186
   # replica: 3
   server:
     replica: 1
-    ip_addr: 192.168.1.219
+    ip_addr: 192.168.1.187
   alertmanager:
     replica: 3
-    ip_addr: 192.168.1.220
+    ip_addr: 192.168.1.188
 
 
 total_prometheus_containers: "{{ _prometheus.server.replica|int +_prometheus.alertmanager.replica|int }}"
@@ -71,18 +73,18 @@ _nginx:
     install: true
     name: nginx-ingress
     class_name: prometheus-ingress-class
-    namespace: "nginx-ingress"
+    namespace: "prometheus-nginx-ingress"
     major_version:
     minor_version:
     patch_version:
     server:
       ingress_name: server-ingress
-      ip_addr: 192.168.1.219
+      ip_addr: 192.168.1.184
       hostname: prometheus-server
       service: prometheus-server
     alertmanager:
       ingress_name: alertmanager-ingress
-      ip_addr: 192.168.1.220
+      ip_addr: 192.168.1.185
       hostnaame: prometheus-alertmanager
       service: prometheus-alertmanager
     domain: jtest.pivotal.io

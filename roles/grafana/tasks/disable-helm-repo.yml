@@ -5,7 +5,6 @@
   register: remove_helm_repos
   ignore_errors: yes
   with_items:
-    - jetstack
     - grafana
 - debug: msg={{ remove_helm_repos }}
 

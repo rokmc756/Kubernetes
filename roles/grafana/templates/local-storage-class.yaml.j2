@@ -2,7 +2,11 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
+{% if _minio.directpv == true %}
+  name: {{ _grafana.directpv_storage_class }}
+{% else %}
   name: {{ _grafana.storage_class }}
+{% endif %}
   namespace: {{ _grafana.namespace }}
 provisioner: kubernetes.io/no-provisioner
 volumeBindingMode: WaitForFirstConsumer
