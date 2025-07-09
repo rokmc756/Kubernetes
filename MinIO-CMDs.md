@@ -1,3 +1,19 @@
+## Deploy Distributed MinIO with Grafana and Prometheus
+```sh
+$ make minio       r=install s=directpv
+$ make prometheus  r=install s=all
+$ make minio       r=install s=all
+$ make grafana     r=install s=all
+$ make prometheus  r=config  s=minio
+```
+
+## Destroy Distributed MinIO with Grafana and Prometheus
+```sh
+$ make grafana     r=uninstall s=all
+$ make minio       r=uninstall s=all
+$ make prometheus  r=uninstall s=all
+$ make minio       r=uninstall s=directpv
+```
 
 ## Configure MinIO Client
 ```sh

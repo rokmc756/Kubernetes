@@ -1,0 +1,62 @@
+---
+- name: Create Namespace for Persistent Volumes
+  shell: |
+    kubectl create namespace {{ _prometheus.namespace }}
+  register: create_namespace
+- debug: msg={{ create_namespace }}
+  when: print_debug == true
+
+
+- import_tasks: create-local-pv.yml
+  when: _prometheus.directpv == false
+
+
+- name: Copy Kube Prometheus Helm Config
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ base_path }}/{{ item }}"
+  register: copy_prometheus_helm_config
+  with_items:
+    - "kube-prometheus-values.yaml"
+- debug: msg={{ copy_prometheus_helm_config }}
+
+
+- name: Deploy Kube Prometheus
+  shell: |
+    /usr/local/bin/helm install kube-prometheus bitnami/kube-prometheus -n {{ _prometheus.namespace }} -f {{ base_path }}/kube-prometheus-values.yaml
+  register: deploy_prometheus
+- debug: msg={{ deploy_prometheus }}
+  when: print_debug == true
+
+
+- name: Validate if Kube Prometheus Containers are Running
+  shell: |
+    kubectl get pods -n {{ _prometheus.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep Running | wc -l
+  register: check_prometheus_containers
+  until: check_prometheus_containers.stdout|int == item.replica|int
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "kube-prometheus-alertmanager-",        replica: "{{ _prometheus.alertmanager.replica }}" }
+    - { svc: "kube-prometheus-blackbox-exporter-",   replica: "{{ _prometheus.blackbox_exporter.replica }}" }
+    - { svc: "kube-prometheus-kube-state-metrics-",  replica: "{{ _prometheus.kube_state_metrics.replica }}" }
+    - { svc: "kube-prometheus-node-exporter-",       replica: "{{ _prometheus.node_exporter.replica }}" }
+    - { svc: "kube-prometheus-operator-",            replica: "{{ _prometheus.operator.replica }}" }
+    - { svc: "kube-prometheus-prometheus-",          replica: "{{ _prometheus.prometheus.replica }}" }
+
+
+# kubectl get svc -n prometheus
+# NAME                                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+# alertmanager-operated                ClusterIP   None             <none>        9093/TCP,9094/TCP,9094/UDP   24m
+# kube-prometheus-alertmanager         ClusterIP   10.102.53.82     <none>        9093/TCP                     24m
+# kube-prometheus-blackbox-exporter    ClusterIP   10.111.163.72    <none>        19115/TCP                    24m
+# kube-prometheus-kube-state-metrics   ClusterIP   10.108.114.128   <none>        8080/TCP                     24m
+# kube-prometheus-node-exporter        ClusterIP   10.109.1.141     <none>        9100/TCP                     24m
+# kube-prometheus-operator             ClusterIP   10.99.236.198    <none>        8080/TCP                     24m
+# kube-prometheus-prometheus           ClusterIP   10.101.174.97    <none>        9090/TCP                     24m
+# prometheus-operated                  ClusterIP   None             <none>        9090/TCP                     24m
+
+
+- debug: msg={{ check_prometheus_containers }}
+  when: print_debug == true
+

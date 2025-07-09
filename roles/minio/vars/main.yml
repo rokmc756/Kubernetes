@@ -36,9 +36,9 @@ _minio:
   namespace: minio
   metrics:
     service_monitor:
-      enabled: false
-      include_node: false
-      public: false
+      enabled: true
+      include_node: true
+      public: true
   persistence:
     storage_path: "/opt/minio-storage"
     enabled: "true"

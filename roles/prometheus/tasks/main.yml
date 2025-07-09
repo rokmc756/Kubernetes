@@ -27,8 +27,8 @@
   when: (( kustomize is defined and kustomize == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
 
 
-- name: Deploy Prometheus
-  import_tasks: install-prometheus.yml
+- name: Deploy Kube Prometheus
+  import_tasks: install-kube-prometheus.yml
   tags: deploy, install
   when: (( prometheus is defined and prometheus == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
 
@@ -64,7 +64,7 @@
 
 
 - name: Destroy Prometheus
-  import_tasks: uninstall-prometheus.yml
+  import_tasks: uninstall-kube-prometheus.yml
   tags: destroy, uninstall
   when: (( prometheus is defined and prometheus == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
 

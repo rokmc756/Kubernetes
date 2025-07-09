@@ -1,0 +1,53 @@
+---
+- name: Uninstall Kube Prometheus
+  shell: |
+    /usr/local/bin/helm uninstall kube-prometheus -n {{ _prometheus.namespace }}
+  register: uninstall_prometheus
+  ignore_errors: true
+- debug: msg={{ uninstall_prometheus }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Validate if Kube Prometheus Containers are Deleted
+  shell: |
+    kubectl get pods -n {{ _prometheus.namespace }} | grep {{ item.svc }} | awk '{print $3}' | grep -E "Running|Terminating" | wc -l
+  register: check_prometheus_containers
+  ignore_errors: true
+  until: check_prometheus_containers.stdout|int == 0
+  retries: 100
+  delay: 10
+  with_items:
+    - { svc: "kube-prometheus-alertmanager-",        replica: "{{ _prometheus.alertmanager.replica }}" }
+    - { svc: "kube-prometheus-blackbox-exporter-",   replica: "{{ _prometheus.blackbox_exporter.replica }}" }
+    - { svc: "kube-prometheus-kube-state-metrics-",  replica: "{{ _prometheus.kube_state_metrics.replica }}" }
+    - { svc: "kube-prometheus-node-exporter-",       replica: "{{ _prometheus.node_exporter.replica }}" }
+    - { svc: "kube-prometheus-operator-",            replica: "{{ _prometheus.operator.replica }}" }
+    - { svc: "kube-prometheus-prometheus-",          replica: "{{ _prometheus.prometheus.replica }}" }
+- debug: msg={{ check_prometheus_containers }}
+  when: print_debug == true
+
+
+- import_tasks: delete-local-pv.yml
+  when: _prometheus.directpv == false
+
+
+- name: Delete Namespace for Persistent Volumes
+  shell: |
+    kubectl delete namespace {{ _prometheus.namespace }}
+  register: delete_namespace
+  ignore_errors: true
+- debug: msg={{ delete_namespace }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Delete Prometheus Helm Config
+  file:
+    path: "{{ base_path }}/{{ item }}"
+    state: absent
+  register: delete_prometheus_helm_config
+  with_items:
+    - "kube-prometheus-values.yaml"
+- debug: msg={{ delete_prometheus_helm_config }}
+

@@ -610,6 +610,10 @@ metrics:
     # scrape each node/pod individually for additional metrics
     includeNode: {{ _minio.metrics.service_monitor.include_node }}
     public: {{ _minio.metrics.service_monitor.public }}
+    selector:
+      matchLabels: "prometheus-2.1.12"   # Added and Found by helm ls --all-namespaces
+    additionalLabels:
+      release: "prometheus-2.1.12"       # Found by helm ls --all-namespaces
     # additionalLabels: {}
     # annotations: {}
     # for node metrics
@@ -619,6 +623,7 @@ metrics:
       # metricRelabelings:
       #   - regex: (server|pod)
       #     action: labeldrop
+    namespace: prometheus
     # namespace: ~
     # Scrape interval, for example `interval: 30s`
     # interval: ~

@@ -16,8 +16,12 @@
   args:
     chdir: "{{ base_path }}"
   with_items:
-    - { svc: "prometheus-alertmanager", lb_ip_addr: "{{ _prometheus.alertmanager.ip_addr }}" }
-    - { svc: "prometheus-server",       lb_ip_addr: "{{ _prometheus.server.ip_addr }}" }
+    - { svc: "kube-prometheus-alertmanager",       lb_ip_addr: "{{ _prometheus.alertmanager.ip_addr }}" }
+    - { svc: "kube-prometheus-blackbox-exporter",  lb_ip_addr: "{{ _prometheus.blackbox_exporter.ip_addr }}" }
+    - { svc: "kube-prometheus-kube-state-metrics", lb_ip_addr: "{{ _prometheus.kube_state_metrics.ip_addr }}" }
+    - { svc: "kube-prometheus-node-exporter",      lb_ip_addr: "{{ _prometheus.node_exporter.ip_addr }}" }
+    - { svc: "kube-prometheus-operator",           lb_ip_addr: "{{ _prometheus.operator.ip_addr }}" }
+    - { svc: "kube-prometheus-prometheus",         lb_ip_addr: "{{ _prometheus.prometheus.ip_addr }}" }
 - debug: msg={{ delete_prometheus_lb }}
   ignore_errors: true
   when: print_debug == true

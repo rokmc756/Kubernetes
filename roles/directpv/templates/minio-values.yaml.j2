@@ -16,6 +16,16 @@ persistence:
   storageClass: directpv-min-io # Ensure it matches the StorageClass used by DirectPV
   size: 10Gi  # Not strictly needed for DirectPV, but Helm chart requires it
 
+
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: prometheus  # Adjust this to match your Prometheus Operator release label
+  interval: 30s
+  scrapeTimeout: 10s
+  path: /minio/v2/metrics/cluster
+
+
 resources:
   requests:
     memory: 2Gi
