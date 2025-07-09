@@ -102,3 +102,10 @@ _ssl:
   common_name: "jest.pivotal.io"
   email: "rokmc756@gmail.com"
 
+_mc:
+  release_date: 20250521015954.0.0-1
+  download: false
+  minio_client_archive_url: https://dl.minio.io/client/mc/release/linux-amd64/archive
+  minio_client_url: https://dl.minio.io/client/mc/release/linux-amd64/mc
+  minio_client_checksum:
+

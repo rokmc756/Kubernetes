@@ -19,7 +19,6 @@
   with_items:
     - { name: 'jetstack',             link: 'https://charts.jetstack.io' }
     - { name: 'minio',                link: 'https://charts.min.io' }
-    - { name: 'prometheus-community', link: 'https://prometheus-community.github.io/helm-charts' }
 - debug: msg={{ add_helm_repos }}
 
 

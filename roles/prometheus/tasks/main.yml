@@ -6,7 +6,7 @@
 
 - name: Set facts for Prometheus
   import_tasks: set-prometheus-facts.yml
-  tags: install, uninstall, apply, remove, deploy, destroy, enable, disable
+  tags: install, uninstall, apply, remove, deploy, destroy, enable, disable, config
 
 
 - name: Prepare Environment such as Creating Directory and Applying Kernel Parameters
@@ -42,13 +42,19 @@
 - name: Install NGINX Ingress
   import_tasks: install-ingress.yml
   tags: setup, install
-  when: ( ingress is defined and ingress == true ) and inventory_hostname in groups['master']
+  when: (( ingress is defined and ingress == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
+
+
+- name: Configure MinIO Metrics
+  import_tasks: config-minio-metrics.yml
+  tags: config, install
+  when: ( minio is defined and minio == true ) and inventory_hostname in groups['master']
 
 
 - name: Unstall NGINX Ingress
   import_tasks: uninstall-ingress.yml
   tags: remove, uninstall
-  when: ( ingress is defined and ingress == true ) and inventory_hostname in groups['master']
+  when: (( ingress is defined and ingress == true ) or ( prometheus_all is defined and prometheus_all == true )) and inventory_hostname in groups['master']
 
 
 - name: Uninstall Load Balancer

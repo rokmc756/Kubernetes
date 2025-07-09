@@ -603,12 +603,13 @@ serviceAccount:
   ## will be created.
   name: "minio-sa"
 
+
 metrics:
   serviceMonitor:
-    enabled: "{{ _minio.metrics.service_monitor.enabled }}"
+    enabled: {{ _minio.metrics.service_monitor.enabled }}
     # scrape each node/pod individually for additional metrics
-    includeNode: "{{ _minio.metrics.service_monitor.include_node }}"
-    public: "{{ _minio.metrics.service_monitor.public }}"
+    includeNode: {{ _minio.metrics.service_monitor.include_node }}
+    public: {{ _minio.metrics.service_monitor.public }}
     # additionalLabels: {}
     # annotations: {}
     # for node metrics

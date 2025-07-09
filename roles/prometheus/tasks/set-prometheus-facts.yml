@@ -1,1 +1,4 @@
-- debug: msg={{ "Need to check if set_facts is needed" }}
+---
+- name: Define Fact of Software Versions
+  set_fact:
+    mcli_pkg_name: "mcli-{{ _mc.release_date }}.x86_64.rpm"
